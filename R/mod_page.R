@@ -135,6 +135,9 @@ mod_pagebody_ui <- function(id) {
 #' @importFrom shinyFiles getVolumes shinyDirChoose parseDirPath shinyFileChoose parseFilePaths
 #' @importFrom fs path_home
 #' @importFrom DT renderDT datatable
+#' @importFrom lubridate ymd
+#' @importFrom purrr map_chr
+#' @importFrom stringr str_split
 #' @import tidyr
 #' @import dplyr
 mod_page_server <- function(id) {
@@ -143,7 +146,6 @@ mod_page_server <- function(id) {
     volumes <- c(Home = path_home(),
                  "R Installation" = R.home(),
                  getVolumes()())
-
     # get rmd file
     shinyFileChoose(
       input = input,
@@ -213,36 +215,47 @@ mod_page_server <- function(id) {
     # read sample info into r
     sampleInfo <- reactive({
       req(input$sampleinfo)
-      read_xlsx(inputSampleInfoFile()) %>%
-        select(`实验室编号(样本编号)`,
-               `姓名`,
-               `采样日期`,
-               `性别`,
-               `入库时间`,
-               `出生日期`,
-               `联系电话`,
-               `送检单位`,
-               `年龄`) %>%
-        mutate(`入库时间` = map_chr(.x = `入库时间`, .f = ~ as.character(ymd(.x))))
+      product_code <-
+        str_split(basename(inputRmdFile()), '_')[[1]][1]
+      if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
+        read_xlsx(inputSampleInfoFile()) %>%
+          select(`Sample Name` = `实验室编号(样本编号)`,
+                 `姓名`,
+                 `采样日期`,
+                 `性别`,
+                 `入库时间`,
+                 `出生日期`,
+                 `联系电话`,
+                 `送检单位`,
+                 `年龄`) %>%
+          mutate(`入库时间` = map_chr(.x = `入库时间`, .f = ~ as.character(ymd(.x))))
+      } else if (product_code %in% c("DX1597", "DX1683", "DX1710", "DX1736")) {
+        read_xlsx(inputSampleInfoFile()) %>%
+          select(`Sample Name` = `绑定的样本编码`,
+                 `性别`,
+                 `年龄`)
+      }
     })
     # display sample info using DT
     combineData <- reactive({
       req(detectData)
       req(sampleInfo)
       detectData_longer <- detectData() %>%
-        pivot_longer(
-          cols = -"Sample Name",
-          names_to = "compound",
-          values_to = "value"
-        ) %>%
-        mutate(value = map_dbl(.x = value, .f = ~ round(as.numeric(.x), 2))) %>%
-        pivot_wider(names_from = compound, values_from = value)
+        mutate(across(-`Sample Name`,.fns = round,2))
+        # pivot_longer(
+        #   cols = -"Sample Name",
+        #   names_to = "compound",
+        #   values_to = "value"
+        # ) %>%
+        # mutate(value = map_dbl(.x = value, .f = ~ round(as.numeric(.x), 2))) %>%
+        # pivot_wider(names_from = compound, values_from = value)
 
       data_combine <- detectData_longer %>%
         nest(data = -`Sample Name`) %>%
-        left_join(sampleInfo(), by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+        inner_join(sampleInfo(), by = "Sample Name") %>%
         nest(sampleInfo = c(-`Sample Name`, -data))
     })
+
     output$sampleInfo <- renderDT({
       req(combineData)
       datatable(
@@ -250,7 +263,7 @@ mod_page_server <- function(id) {
           unnest(data) %>%
           unnest(sampleInfo),
         selection = 'none',
-        options = list(pageLength = 20, scrollY = "450px")
+        options = list(pageLength = 20, scrollY = "250px")
       )
     })
     # check input
@@ -262,6 +275,8 @@ mod_page_server <- function(id) {
       )
     })
     observe({
+      product_code <-
+        str_split(basename(inputRmdFile()), '_')[[1]][1]
       ref_file <-
         str_c(
           dirname(inputRmdFile()),"/",
@@ -283,11 +298,13 @@ mod_page_server <- function(id) {
     observe({
       updateCheckboxInput(
         inputId = "check_sampleinfo",
-        value = !is.null(detectData()),
+        value = !is.null(sampleInfo()),
         label = "Sample info"
       )
     })
     observe({
+      product_code <-
+        str_split(basename(inputRmdFile()), '_')[[1]][1]
       inp_file <-
         str_c(
           dirname(inputRmdFile()),"/",
@@ -306,6 +323,9 @@ mod_page_server <- function(id) {
         label = "Save dir"
       )
     })
+    # observe({
+    #   str(combineData())
+    # })
     # generate report
     observeEvent(input$start, {
       req(input$rmd)

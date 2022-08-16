@@ -4,7 +4,7 @@
 #' @importFrom tibble tibble
 #' @param data tibble
 #' @param reference tibble
-#' @return text
+#' @return list
 interprete_DX2056 <- function(data, reference) {
   combined <- data %>%
     pivot_longer(cols = everything(),
@@ -50,11 +50,11 @@ interprete_DX2056 <- function(data, reference) {
       ),
       .f = ~ case_when(
         all(is.na(..2), is.na(..3)) ~ ..4,
-        all(!is.na(..2), !is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
-                                                  ..1 > ..3 ~ "大于检测上限值",
-                                                  TRUE ~ ..4),
-        all(is.na(..2), !is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+        all(!is.na(..2),!is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                 ..1 > ..3 ~ "大于检测上限值",
                                                  TRUE ~ ..4),
+        all(is.na(..2),!is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+                                                TRUE ~ ..4),
         all(!is.na(..2), is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
                                                  TRUE ~ ..4),
       )
@@ -88,19 +88,19 @@ interprete_DX2056 <- function(data, reference) {
   # compound's alias
   alias <-
     tibble(
-      ch_compound = c("甜菜碱", "同型半胱氨酸", "4-吡哆酸", "5-甲基四氢叶酸", "甲基丙二酸"),
-      alias_name = c("甜菜碱", "同型半胱氨酸", "维生素$B_6$", "5-甲基四氢叶酸", "维生素$B_{12}$")
+      ch_compound = c("维生素B2", "同型半胱氨酸", "4-吡哆酸", "5-甲基四氢叶酸", "甲基丙二酸"),
+      alias_name = c("维生素$B_2$", "同型半胱氨酸", "维生素$B_6$", "5-甲基四氢叶酸", "维生素$B_{12}$")
     )
   # interpretation statement based on stated
   # case A: hcy normal
-  if (stated$同型半胱氨酸   == "低风险") {
+  if (stated$`同型半胱氨酸`== "低风险") {
     # case A1
     # "甜菜碱" "4-吡哆酸" "5-甲基四氢叶酸" "甲基丙二酸" all normal
     if (all(
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甜菜碱   == "低风险",
-      stated$甲基丙二酸   == "低风险"
+      stated$`维生素B2`    == "低风险",
+      stated$`甲基丙二酸`    == "低风险"
     )) {
       interpretation <-
         "您的同型半胱氨酸（Hcy）水平及其代谢通路相关营养素指标目前均处于良好的平衡状态，建议您继续保持良好的生活作息和饮食习惯。祝您健康愉快！"
@@ -110,8 +110,8 @@ interprete_DX2056 <- function(data, reference) {
       !all(
         stated$`4-吡哆酸` == "低风险",
         stated$`5-甲基四氢叶酸` == "低风险",
-        stated$甜菜碱   == "低风险",
-        stated$甲基丙二酸   == "低风险"
+        stated$`维生素B2`    == "低风险",
+        stated$`甲基丙二酸`    == "低风险"
       )
     ) {
       temp <- stated %>%
@@ -127,18 +127,18 @@ interprete_DX2056 <- function(data, reference) {
       )
     }
     # case B: Hcy abnormal
-  } else if (stated$同型半胱氨酸   != "低风险") {
+  } else if (stated$`同型半胱氨酸`    != "低风险") {
     # case B1
     # "甜菜碱" "4-吡哆酸" "5-甲基四氢叶酸" "甲基丙二酸" all normal
     if (all(
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甜菜碱   == "低风险",
-      stated$甲基丙二酸   == "低风险"
+      stated$`维生素B2`    == "低风险",
+      stated$`甲基丙二酸`    == "低风险"
     )) {
       interpretation <- str_c(
         "您的同型半胱氨酸（Hcy）水平",
-        stated$同型半胱氨酸,
+        stated$`同型半胱氨酸`,
         "，该指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。Hcy代谢通路相关4种主要营养素指标在此次检测中均处于正常状态，因此推测可能是由于其它营养素指标异常或非营养因素导致的疾病相关指标异常，如Hcy代谢的某些关键酶失活、激素影响、肾功能障碍和损伤、甲状腺功能减退、严重贫血、严重硬皮病及恶性肿瘤等疾病、应用氨甲蝶呤、一氧化氮、抗癫痫药、利尿药、烟酸等药物等。建议您及时就医查明 Hcy 异常升高的原因。祝您健康愉快！"
       )
     } else if # case B2
@@ -147,8 +147,8 @@ interprete_DX2056 <- function(data, reference) {
       !all(
         stated$`4-吡哆酸` == "低风险",
         stated$`5-甲基四氢叶酸` == "低风险",
-        stated$甜菜碱   == "低风险",
-        stated$甲基丙二酸   == "低风险"
+        stated$`维生素B2`    == "低风险",
+        stated$`甲基丙二酸`    == "低风险"
       )
     ) {
       temp <- stated %>%
@@ -159,7 +159,7 @@ interprete_DX2056 <- function(data, reference) {
         left_join(alias, by = "ch_compound")
       interpretation <- str_c(
         "您的同型半胱氨酸（Hcy）水平",
-        stated$同型半胱氨酸,
+        stated$`同型半胱氨酸`,
         "，该指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。您同时还存在",
         str_c(temp$alias_name, collapse = "、"),
         "缺乏/不足的情况，可能是引起Hcy水平升高的因素之一。请您在医生指导下根据检测结果增加相关营养素的摄入，调整饮食结构。建议您定期体检，形成良好的生活作息和饮食习惯，适当增加体育锻炼，保持良好睡眠、放松减压。祝您健康愉快！"
@@ -180,7 +180,7 @@ interprete_DX2056 <- function(data, reference) {
 #' @importFrom tibble tibble
 #' @param data tibble
 #' @param reference tibble
-#' @return text
+#' @return list
 interprete_DX2057 <- function(data, reference) {
   combined <- data %>%
     mutate(`SAM/SAH` = round(SAM / SAH, 2)) %>%
@@ -227,11 +227,11 @@ interprete_DX2057 <- function(data, reference) {
       ),
       .f = ~ case_when(
         all(is.na(..2), is.na(..3)) ~ ..4,
-        all(!is.na(..2), !is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
-                                                  ..1 > ..3 ~ "大于检测上限值",
-                                                  TRUE ~ ..4),
-        all(is.na(..2), !is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+        all(!is.na(..2),!is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                 ..1 > ..3 ~ "大于检测上限值",
                                                  TRUE ~ ..4),
+        all(is.na(..2),!is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+                                                TRUE ~ ..4),
         all(!is.na(..2), is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
                                                  TRUE ~ ..4),
       )
@@ -265,21 +265,43 @@ interprete_DX2057 <- function(data, reference) {
   # compound's alias
   alias <-
     tibble(
-      ch_compound = c("甜菜碱", "同型半胱氨酸", "4-吡哆酸", "5-甲基四氢叶酸", "甲基丙二酸","胆碱","维生素B2","S-腺苷甲硫氨酸","S-腺苷同型半胱氨酸","SAM/SAH"),
-      alias_name = c("甜菜碱", "同型半胱氨酸", "维生素$B_6$", "叶酸", "维生素$B_{12}$","胆碱","维生素$B_2$","S-腺苷甲硫氨酸","S-腺苷同型半胱氨酸","SAM/SAH")
+      ch_compound = c(
+        "甜菜碱",
+        "同型半胱氨酸",
+        "4-吡哆酸",
+        "5-甲基四氢叶酸",
+        "甲基丙二酸",
+        "胆碱",
+        "维生素B2",
+        "S-腺苷甲硫氨酸",
+        "S-腺苷同型半胱氨酸",
+        "SAM/SAH"
+      ),
+      alias_name = c(
+        "甜菜碱",
+        "同型半胱氨酸",
+        "维生素$B_6$",
+        "叶酸",
+        "维生素$B_{12}$",
+        "胆碱",
+        "维生素$B_2$",
+        "S-腺苷甲硫氨酸",
+        "S-腺苷同型半胱氨酸",
+        "SAM/SAH"
+      )
     )
   # interpretation statement based on stated
   # case A: hcy normal
-  if (stated$同型半胱氨酸  == "低风险") {
+  if (stated$`同型半胱氨酸`   == "低风险") {
     # case A1:
     # 维生素B2 4-吡哆酸 5-甲基四氢叶酸 甲基丙二酸 甜菜碱 胆碱 all normal
     if (all(
-      stated$维生素B2 == "低风险",
+      stated$`维生素B2` == "低风险",
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甲基丙二酸  == "低风险",
-      stated$甜菜碱  == "低风险",
-      stated$胆碱  == "低风险"
+      stated$`甲基丙二酸`   == "低风险",
+      stated$`甜菜碱`   == "低风险",
+      stated$`胆碱`   == "低风险"
     )) {
       # case A1-1:
       # S-腺苷甲硫氨酸 S-腺苷同型半胱氨酸 SAM/SAH all normal
@@ -315,12 +337,12 @@ interprete_DX2057 <- function(data, reference) {
       # case A2:
       # 维生素B2 4-吡哆酸 5-甲基四氢叶酸 甲基丙二酸 甜菜碱 胆碱 not all normal
     } else if (!all(
-      stated$维生素B2 == "低风险",
+      stated$`维生素B2` == "低风险",
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甲基丙二酸  == "低风险",
-      stated$甜菜碱  == "低风险",
-      stated$胆碱  == "低风险"
+      stated$`甲基丙二酸`   == "低风险",
+      stated$`甜菜碱`   == "低风险",
+      stated$`胆碱`   == "低风险"
     )) {
       temp <- stated %>%
         pivot_longer(cols = everything(),
@@ -369,16 +391,16 @@ interprete_DX2057 <- function(data, reference) {
     }
     # case B:
     # Hcy abnormal
-  } else if (stated$同型半胱氨酸  != "低风险") {
+  } else if (stated$`同型半胱氨酸`   != "低风险") {
     # case B1:
     # 维生素B2 4-吡哆酸 5-甲基四氢叶酸 甲基丙二酸 甜菜碱 胆碱 all normal
     if (all(
-      stated$维生素B2 == "低风险",
+      stated$`维生素B2` == "低风险",
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甲基丙二酸  == "低风险",
-      stated$甜菜碱  == "低风险",
-      stated$胆碱  == "低风险"
+      stated$`甲基丙二酸`   == "低风险",
+      stated$`甜菜碱`   == "低风险",
+      stated$`胆碱`   == "低风险"
     )) {
       # case B1-1:
       # S-腺苷甲硫氨酸 S-腺苷同型半胱氨酸 SAM/SAH all normal
@@ -389,7 +411,7 @@ interprete_DX2057 <- function(data, reference) {
       )) {
         interpretation <- str_c(
           "您的同型半胱氨酸（Hcy）水平",
-          stated$同型半胱氨酸,
+          stated$`同型半胱氨酸`,
           "，该指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。您血液中Hcy代谢通路相关营养素指标在此次检测中均处于正常状态，因此推测可能是由于非营养因素导致的疾病相关指标异常，如Hcy代谢的某些关键酶失活、激素影响、肾功能障碍和损伤、甲状腺功能减退、严重贫血、严重硬皮病及恶性肿瘤等疾病、应用氨甲蝶呤、一氧化氮、抗癫痫药、利尿药、烟酸等药物等。建议您及时就医查明Hcy异常升高的原因。祝您健康愉快！"
         )
         # case B1-2:
@@ -408,7 +430,7 @@ interprete_DX2057 <- function(data, reference) {
           left_join(alias, by = "ch_compound")
         interpretation <- str_c(
           "您的同型半胱氨酸（Hcy）水平",
-          stated$同型半胱氨酸,
+          stated$`同型半胱氨酸`,
           "，其它疾病相关指标",
           str_c(temp$alias_name, collapse = "、"),
           "也处于异常状态，以上指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。您血液中Hcy代谢通路相关营养素指标在此次检测中均处于正常状态，因此推测可能是由于非营养因素导致的疾病相关指标异常，如Hcy代谢的某些关键酶失活、激素影响、肾功能障碍和损伤、甲状腺功能减退、严重贫血、严重硬皮病及恶性肿瘤等疾病、应用氨甲蝶呤、一氧化氮、抗癫痫药、利尿药、烟酸等药物等。建议您及时就医查明Hcy异常升高的原因。祝您健康愉快！"
@@ -417,12 +439,12 @@ interprete_DX2057 <- function(data, reference) {
       # case B2:
       # 维生素B2 4-吡哆酸 5-甲基四氢叶酸 甲基丙二酸 甜菜碱 胆碱 not all normal
     } else if (!all(
-      stated$维生素B2 == "低风险",
+      stated$`维生素B2` == "低风险",
       stated$`4-吡哆酸` == "低风险",
       stated$`5-甲基四氢叶酸` == "低风险",
-      stated$甲基丙二酸  == "低风险",
-      stated$甜菜碱  == "低风险",
-      stated$胆碱  == "低风险"
+      stated$`甲基丙二酸`   == "低风险",
+      stated$`甜菜碱`   == "低风险",
+      stated$`胆碱`   == "低风险"
     )) {
       temp <- stated %>%
         pivot_longer(cols = everything(),
@@ -442,7 +464,7 @@ interprete_DX2057 <- function(data, reference) {
       )) {
         interpretation <- str_c(
           "您的同型半胱氨酸（Hcy）水平",
-          stated$同型半胱氨酸,
+          stated$`同型半胱氨酸`,
           "，该指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。同时，您目前存在",
           str_c(temp$alias_name, collapse = "、"),
           "缺乏的情况，请您在医生指导下根据检测结果增加相关营养素的摄入，调整饮食结构。建议您定期体检，形成良好的生活作息和饮食习惯，适当增加体育锻炼，保持良好睡眠、放松减压。祝您健康愉快！"
@@ -463,7 +485,7 @@ interprete_DX2057 <- function(data, reference) {
           left_join(alias, by = "ch_compound")
         interpretation <- str_c(
           "您的同型半胱氨酸（Hcy）水平",
-          stated$同型半胱氨酸,
+          stated$`同型半胱氨酸`,
           "，其它疾病相关指标",
           str_c(temp2$alias_name, collapse = "、"),
           "也处于异常状态，以上指标异常与心脑血管疾病、神经系统疾病、肿瘤、高血压等慢性疾病密切相关，需引起重视。同时，您目前存在",
@@ -532,9 +554,16 @@ interprete_DX2059 <- function(data,
         ..3 = quanLimit_upper,
         ..4 = mark
       ),
-      .f = ~ case_when(..1 < ..2 ~ "小于检测下限值",
-                       ..1 > ..3 ~ "大于检测上限值",
-                       TRUE ~ ..4)
+      .f = ~ case_when(
+        all(is.na(..2), is.na(..3)) ~ ..4,
+        all(!is.na(..2),!is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                 ..1 > ..3 ~ "大于检测上限值",
+                                                 TRUE ~ ..4),
+        all(is.na(..2),!is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+                                                TRUE ~ ..4),
+        all(!is.na(..2), is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                 TRUE ~ ..4),
+      )
     )) %>%
     select(ch_compound, mark)
 
@@ -607,7 +636,76 @@ interprete_DX2059 <- function(data,
       marked = marked,
       interpretation = interpretation,
       stated = stated,
-      riskLevel = stated$氧化三甲胺
+      riskLevel = stated$`氧化三甲胺`
+    )
+  )
+}
+
+#' interprete_DX2058
+#' @param data tibble
+#' @param reference tibble
+#' @return list
+interprete_DX2058 <- function(data,
+                              reference) {
+  combined <- data %>%
+    pivot_longer(cols = everything(),
+                 names_to = "compound",
+                 values_to = "value") %>%
+    left_join(reference, by = "compound")
+  # caculate score
+  score <- combined %>%
+    # pivot_longer(cols = everything(),
+    #              names_to = "compound",
+    #              values_to = "value") %>%
+    # left_join(reference, by = "compound") %>%
+    filter(!is.na(lower_limit)) %>%
+    mutate(score = pmap_dbl(
+      .l = list(..1 = value,
+                ..2 = lower_limit,
+                ..3 = upper_limit),
+      .f = ~ case_when(..1 < ..2 ~ 0,
+                       between(..1, ..2, ..3) ~ 1,
+                       ..1 > ..3 ~ 2)
+    ))
+  finalScore <- sum(score$score)
+
+  # mark by the limit of quantification
+  marked <- combined %>%
+    mutate(mark = pmap_chr(
+      .l = list(
+        ..1 = value,
+        ..2 = quanLimit_lower,
+        ..3 = quanLimit_upper
+      ),
+      .f = ~ case_when(
+        all(is.na(..2), is.na(..3)) ~ as.character(..1),
+        all(!is.na(..2), !is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                  ..1 > ..3 ~ "大于检测上限值",
+                                                  TRUE ~ as.character(..1)),
+        all(is.na(..2), !is.na(..3)) ~ case_when(..1 > ..3 ~ "大于检测上限值",
+                                                 TRUE ~ as.character(..1)),
+        all(!is.na(..2), is.na(..3)) ~ case_when(..1 < ..2 ~ "小于检测下限值",
+                                                 TRUE ~ as.character(..1)),
+      )
+    )) %>%
+    select(compound, mark)
+  # interpretation
+  interpretation <- case_when(
+    finalScore <= 2 ~ "您的神经酰胺风险评估等级为低风险，建议您继续保持健康的生活作息和饮食习惯，保持适当的体育锻炼。祝您健康愉快！",
+    finalScore <= 6 ~ "您的神经酰胺风险评估等级为中风险，建议您戒烟、限酒、低糖/低脂饮食，同时适当增加体育锻炼，3~6个月后复查。若您的神经酰胺风险值持续升高，建议您在医生的指导下服用药物治疗一个月后复查。祝您健康愉快！",
+    finalScore <= 9 ~ "您的神经酰胺风险评估等级为中高风险，建议您前往心血管专科就诊，排查并控制其他心血管危险因素；同时建议您在医生的指导下服用药物治疗一个月后复查。若您的神经酰胺风险值持续升高，建议您前往心血管专科进行冠状动脉影像学评估。祝您健康愉快！",
+    finalScore <= 12 ~ "您的神经酰胺风险评估等级为高风险，建议您前往心血管专科就诊，排查并控制其他心血管危险因素、进行冠状动脉影像学评估，同时在医生的指导下进行药物等干预治疗，并密切随访。祝您健康愉快！"
+  )
+  risk <- case_when(finalScore <= 2 ~ "低风险",
+                    finalScore <= 6 ~ "中风险",
+                    finalScore <= 9 ~ "中高风险",
+                    finalScore <= 12 ~ "高风险")
+  return(
+    list(
+      marked = marked,
+      finalScore = finalScore,
+      interpretation = interpretation,
+      risk = risk
     )
   )
 }

@@ -12,7 +12,7 @@ interprete_DX2057(data, reference)
 \item{reference}{tibble}
 }
 \value{
-text
+list
 }
 \description{
 interprete_DX2057

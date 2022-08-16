@@ -9,6 +9,8 @@
 #' @importFrom dplyr mutate left_join case_when
 #' @importFrom purrr map_dbl pwalk
 #' @importFrom readxl read_xlsx
+#' @importFrom stringr str_remove
+#' @importFrom rmarkdown render
 #'
 renderFlow <- function(rmdFile,
                        combineData,
@@ -36,6 +38,7 @@ renderFlow <- function(rmdFile,
     reference <- read_xlsx(ref_file)
   }
 
+  # showNotification("running...", type = "message")
   if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
 
     pwalk(
@@ -44,16 +47,18 @@ renderFlow <- function(rmdFile,
         ..2 = combineData$data,
         ..3 = combineData$sampleInfo
       ),
-      .f = ~ .renderSingle(
-        rmdFile = rmdFile,
-        sampleId = ..1,
-        data = ..2,
-        sampleInfo = ..3,
-        reference = reference,
-        interpretation = NA,
-        saveDir = saveDir,
-        report_format = report_format,
-        product_code = product_code)
+      .f = ~
+        .renderSingle(
+          rmdFile,
+          sampleId = ..1,
+          data = ..2,
+          sampleInfo = ..3,
+          reference = reference,
+          interpretation = NA,
+          saveDir,
+          report_format,
+          product_code
+        )
     )
 
   } else if (product_code %in% c("DX1597", "DX1683", "DX1710", "DX1736")) {
@@ -69,22 +74,29 @@ renderFlow <- function(rmdFile,
         ..2 = combineData$data,
         ..3 = combineData$sampleInfo
       ),
-      .f = ~ .renderSingle(
-        rmdFile = rmdFile,
-        sampleId = ..1,
-        data = ..2,
-        sampleInfo = ..3,
-        reference = reference,
-        interpretation = interpretation,
-        saveDir = saveDir,
-        report_format = report_format,
-        product_code = product_code)
+      .f = ~
+        .renderSingle(
+          rmdFile,
+          sampleId = ..1,
+          data = ..2,
+          sampleInfo = ..3,
+          reference = reference,
+          interpretation = interpretation,
+          saveDir,
+          report_format,
+          product_code
+        )
     )
   } else {
     showNotification("Unsupported product type!", type = "error")
     stop("Unsupported product type!")
   }
-  file.remove(list.files(dirname(rmdFile),pattern = ".log|.tex",full.names = T))
+  file.remove(list.files(dirname(rmdFile), pattern = ".log|.tex", full.names = T))
+  # if (file.exists(str_c(saveDir, output_file, sep = "/"))) {
+  #   showNotification(str_c(sampleId, "succeed!", sep = ""), type = "message")
+  # } else {
+  #   showNotification(str_c(sampleId, "defeated!", sep = ""), type = "error")
+  # }
 }
 
 #' .renderSingle
@@ -102,10 +114,12 @@ renderFlow <- function(rmdFile,
                           product_code) {
   output_file <- case_when(
     report_format == "PDF" ~ str_c(sampleId,"_",product_code, "_正式报告_中文_其他.pdf", sep = ""),
-    report_format == "HTML" ~ str_c(sampleId,".html",sep = "")
+    report_format == "HTML" ~ str_c(product_code,"_",sampleId,".html",sep = "")
   )
 
   showNotification("running...", type = "message")
+  str(unlist(sampleInfo))
+  str(data)
 
   render(
     rmdFile,
