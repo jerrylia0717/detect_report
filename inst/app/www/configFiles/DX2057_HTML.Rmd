@@ -1,0 +1,533 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+title: 同型半胱氨酸代谢通路检测报告
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(plotly)
+```
+<!-- 内部样式表 -->
+<head>
+<style>
+html {
+font-weight:normal;
+}
+body {
+font-size:100%;
+}
+h1.title {
+text-align:center;
+font-size:1.9em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:2.1em;
+font-family:"Times New Roman", Times, serif;
+}
+h3 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+font-weight: bolder;
+}
+h4 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+}
+
+.list {
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+font-weight: bolder;
+}
+
+p.legend {
+text-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:0.7em;
+}
+
+.pic {
+margin: 0 auto; display: block;
+}
+table tr:first-child {
+font-weight: bolder;
+}
+td.item {
+font-weight: bolder;
+}
+td {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+th {
+height:50px;
+text-align:left;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight:normal;
+text-indent:35px;
+}
+
+</style>
+</head>
+
+<!-- html内容 -->
+<html>
+<body>
+
+<h2> 
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE}
+textResults <-
+  interprete_DX2057(data = params$data,
+                    reference = params$reference)
+
+detectData <- params$data %>% 
+  pivot_longer(cols = everything(),names_to = "compound",values_to = "value")
+
+ch_compound_levels = c(
+  "同型半胱氨酸",
+  "5-甲基四氢叶酸",
+  "甲基丙二酸",
+  "4-吡哆酸",
+  "维生素B2",
+  "甜菜碱",
+  "胆碱",
+  "S-腺苷甲硫氨酸",
+  "S-腺苷同型半胱氨酸",
+  "SAM/SAH"
+)
+
+plot <- trans2show_cardio_ggplot(
+  data = detectData %>%
+    left_join(params$reference,by = "compound") %>%
+    filter(ch_compound %in% ch_compound_levels) %>%
+    select(compound,value),
+  reference = params$reference,
+  barWidth = 0.4,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels
+)
+```
+
+```{r,echo=FALSE,fig.align='center',fig.height=12,fig.width=8}
+htmltools::div(ggplotly(plot) %>% style(hoverinfo = 'none'), align="center")
+```
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 分析
+</h2>
+
+
+<p id = "individual">
+`r textResults$interpretation`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责，结果判读意见仅供参考，不作为诊断结果。
+</p>
+
+<p class = "paragraph">
+2.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+<p class = "paragraph">
+3.本检测仅用于上述检测结果中所列举的指标检测。
+</p>
+
+<p class = "paragraph">
+4.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	同型半胱氨酸及其代谢通路检测意义
+</h2>
+
+<p class = "paragraph">同型半胱氨酸 (homocysteine，Hcy) 同型半胱氨酸(homocysteine，Hcy)是一种含硫氨基酸，是甲硫氨酸脱甲基后的产物，这是同型半胱氨酸的唯一来源。《高同型半胱胺酸血症诊疗专家共识》将成人高同型半胱氨酸血症(Hcy≥10μmol/L)划分为轻度(10-15μmol/L)、中度(15-30μmol/L) 和重度(＞30μmol/L)。高同型半胱氨酸血症通过甲基化和转硫化异常以及其他机制共同促进多种疾病的发生发展，与高血压等心脑血管疾病、神经系统疾病、肿瘤密切相关。多种因素可导致高同型半胱氨酸血症，遗传因素如同型半胱氨酸代谢关键酶失活、营养因素如因不良生活方式导致叶酸、维生素B<sub>6</sub>、维生素B<sub>12</sub>的消耗过多或者这些营养素摄入过少，都可引起同型半胱氨酸的升高。此外，年龄、性别、激素、药物和疾病等因素也可影响同型半胱氨酸水平。
+</p>
+<p class = "paragraph">
+开展同型半胱氨酸营养代谢检测，不仅可以明确同型半胱氨酸水平是否升高以及升高的严重程度，还可了解叶酸、维生素B<sub>12</sub>、维生素B<sub>6</sub>、甜菜碱等营养素的个体状况，从而指导精准营养干预，高效改善同型半胱氨酸水平。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	高同型半胱氨酸血症的危害
+</h2>
+
+<h3>
+高血压
+</h3>
+
+<p class = "paragraph">
+高同型半胱氨酸血症通过抑制体内内源性硫化氢的生成活化血管紧张素转换酶，产生血管紧张素Ⅱ作用于血管紧张素I型受体，从而导致血压的升高及血管增生等一系列病理过程。
+</p>
+
+<p class = "paragraph">
+同型半胱氨酸水平越高，高血压患病率越高。Hcy≥10μmol/L者，高血压患病率31.4%，Hcy≥15μmol/L者，高血压患病率39.2%。
+</p>
+
+<p class = "paragraph">
+高血压患者中，高同型半胱氨酸血症比例高。H型高血压：血Hcy≥10μmol/L的高血压，我国高血压患者中有约75%为H型高血压。
+</p>
+
+<h3>
+脑卒中
+</h3>
+
+<p class = "paragraph">
+高同型半胱氨酸血症是引发脑卒中的独立性危险因素。
+</p>
+
+<p class = "paragraph">
+Hcy≥10.5μmol/L者，脑卒中风险增加到4.2倍。
+</p>
+
+<p class = "paragraph">
+H型高血压患者罹患脑卒中风险是单独高血压患者的4倍。
+</p>
+
+<h3>
+缺血性心脏病
+</h3>
+
+<p class = "paragraph">
+动脉粥样硬化的形成归因于同型半胱氨酸化脂蛋白与微生物的聚集,在动脉易损斑块形成过程中阻塞了血管,进而发生心血管事件。
+</p>
+
+<p class = "paragraph">
+所有冠状动脉疾病的10%归因于高同型半胱氨酸水平。
+</p>
+
+<p class = "paragraph">
+同型半胱氨酸水平每增加5μmol/L会使缺血性心脏病的风险增加84%。
+</p>
+
+<h3>
+骨质疏松
+</h3>
+
+<p class = "paragraph">
+高同型半胱氨酸血症对成骨细胞和破骨细胞具有有害作用，破坏胶原分子的交联，减少骨量，从而导致骨强度降低。
+</p>
+
+<p class = "paragraph">
+男性高同型半胱氨酸血症患者在3年内发生骨折的风险值为3.8。
+</p>
+
+<p class = "paragraph">
+女性高同型半胱氨酸血症患者在3年内发生骨折的风险值为2.8。
+</p>
+
+<h3>
+糖尿病并发症
+</h3>
+
+<p class = "paragraph">
+伴有高同型半胱氨酸血症的糖尿病患者更易发生大血管损伤和微血管病变。
+</p>
+
+<p class = "paragraph">
+同型半胱氨酸水平每增加5μmol/L，发生神经病变的风险增加2.3倍。
+</p>
+
+<p class = "paragraph">
+同型半胱氨酸水平每增加5μmol/L，发生糖尿病肾病的风险增加3.86倍。
+</p>
+
+<h3>
+慢性肾病
+</h3>
+
+<p class = "paragraph">
+肾脏在同型半胱氨酸的代谢清除中发挥了关键的作用。高同型半胱氨酸血症与肾功能减退和肾小球滤过率负相关，是慢性肾脏病进展的独立危险因素。
+</p>
+
+<p class = "paragraph">
+Hcy＜22.9μmol/L的肾透析患者5年生存率可以超过95%。
+</p>
+
+<p class = "paragraph">
+Hcy＞37.8μmol/L的肾透析患者5年生存率不足65%。
+</p>
+
+<h3>
+肝脏疾病
+</h3>
+
+<p class = "paragraph">
+肝脏是同型半胱氨酸代谢的重要器官,当肝细胞发生损伤时会升高同型半胱氨酸的水平，高同型半胱氨酸血症又能增强氧化应激，引起肝脏脂质过氧化，诱导肝细胞损伤和凋亡，加重肝损伤。
+</p>
+
+<p class = "paragraph">
+同型半胱氨酸水平分别为＜5.1μmol/L、5.1-7.1μmol/L、7.1-9.9μmol/L和≥9.9μmol/L的人群,导致非酒精性脂肪肝的患病率分别为19.8%、28.3%、37.7%和 46.6%。
+</p>
+
+<h3>
+肿瘤
+</h3>
+
+<p class = "paragraph">
+肿瘤与DNA合成和甲基化异常密切相关。同型半胱氨酸代谢过程中如果S-腺苷甲硫氨酸(S-adenosyl  methionine, SAM)生成抑制或受阻，可导致 DNA 甲基化紊乱，造成基因表达抑制、染色体的失活等。
+</p>
+
+<p class = "paragraph">
+亚洲人群中高水平的tHcy与多种肿瘤相关，风险值平均为6.87。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	高同型半胱氨酸血症的改善措施
+</h2>
+
+<p class = "paragraph">
+1.健康生活方式干预：戒烟、限酒、合理膳食、增加运动量,有助于降低同型半胱氨酸水平。
+</p>
+
+<p class = "paragraph">
+2.营养治疗：临床中可以根据 MTHFR、MTRR 基因的多态性结合叶酸、维生素B<sub>12</sub>、维生素B<sub>6</sub>、胆碱、甜菜碱等营养素水平制订个性化的精准补充方案。 对非基因突变的高血同患者，应根据叶酸、维生素B<sub>12</sub>、维生素B<sub>6</sub>、胆碱的检查结果，重点补充严重缺乏的营养素。
+</p>
+
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`同型半胱氨酸及其代谢通路检测指标简述
+</h2>
+
+
+<table border = "1" id = "tabs">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">同型半胱氨酸<br />（Hcy）</td>
+<td>`r str_c(params$data$Hcy,"μmol/L",sep = " ")`</td>
+<td><p>≥ 10（轻度升高）<br />≥ 15（中度升高）<br />≥ 30（重度升高）</p></td>
+<!-- <p>≥ 15（中度升高）</p> -->
+<!-- <p>≥ 30（重度升高）</td></p> -->
+<td>`r textResults$stated$"同型半胱氨酸"`</td>
+</tr>
+<tr>
+<th colspan="4">同型半胱氨酸是一种含硫氨基酸，是甲硫氨酸脱甲基后的产物。同型半胱氨酸水平过高会增加高血压等心脑血管疾病、神经系统疾病、肿瘤等患病风险。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">5-甲基四氢叶酸<br />（5-MTHF）</td>
+<td>`r  str_c(params$data$"5-MTHF","ng/mL",sep = " ")`</td>
+<td>< 4</td>
+<td>`r textResults$stated$"5-甲基四氢叶酸"`</td>
+</tr>
+<tr>
+<th colspan="4">食物中摄入的叶酸在体内转化为5-甲基四氢叶酸，5-甲基四氢叶酸再以维生素B<sub>12</sub>为转运载体将甲基供给同型半胱氨酸生成甲硫氨酸。因此，5-甲基四氢叶酸的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000mg天然甜菜碱、0.8mg叶酸、2.8mg维生素B<sub>2</sub>、2.8mg维生素 B<sub>6</sub>以及4.8μg维生素B<sub>12</sub>的降同型半胱氨酸水平方案。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">甲基丙二酸<br />（MMA）</td>
+<td>`r str_c(params$data$MMA,"nmol/L",sep = " ")`</td>
+<td>≥ 318</td>
+<td>`r textResults$stated$"甲基丙二酸"`</td>
+</tr>
+<tr>
+<th colspan="4">甲基丙二酸是人体对于某些氨基酸和脂肪的代谢存在异常时产生的物质，甲基丙二酸水平过高提示了维生素B<sub>12</sub>可能缺乏或存在代谢异常，可用于评估维生素B<sub>12</sub>的营养情况。维生素B<sub>12</sub>是5-甲基四氢叶酸将甲基供给同型半胱氨酸时生成甲硫氨酸时的转运载体。因此，维生素B<sub>12</sub>的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000mg天然甜菜碱、0.8mg叶酸、2.8mg维生素B<sub>2</sub>、2.8mg维生素B<sub>6</sub>以及4.8μg维生素B<sub>12</sub>的降同型半胱氨酸水平方案。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">4-吡哆酸<br />（4-PA）</td>
+<td>`r str_c(params$data$"4-PA","ng/mL",sep = " ")`</td>
+<td>＜ 3</td>
+<td>`r textResults$stated$"4-吡哆酸"`</td>
+</tr>
+<tr>
+<th colspan="4">维生素B<sub>6</sub>又称为吡哆素，4-吡哆酸是维生素B<sub>6</sub>在人体内的代谢终产物，可反应人体维生素B<sub>6</sub>的水平。同型半胱氨酸可通过叶酸途径完成再甲基化，维生素B<sub>6</sub>是四氢叶酸转变为5,10-亚甲基四氢叶酸过程中的辅酶；同时也是转硫途径中同型半胱氨酸转变为胱氨酸时的辅酶。因此，维生素B<sub>6</sub>的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000mg天然甜菜碱、0.8mg叶酸、2.8mg维生素B<sub>2</sub>、2.8mg维生素B<sub>6</sub>以及4.8μg维生素B<sub>12</sub>的降同型半胱氨酸水平方案。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">甜菜碱<br />（Betaine）</td>
+<td>`r str_c(params$data$Betaine,"μmol/L",sep = " ")`</td>
+<td>＜ 30</td>
+<td>`r textResults$stated$"甜菜碱"`</td>
+</tr>
+<tr>
+<th colspan="4">甜菜碱是一种生物碱，广泛存在于动植物体内。甜菜碱可直接将甲基提供给同型半胱氨酸从而生成甲硫氨酸。天然甜菜碱可以为机体提供3个甲基，是体内最为高效的甲基供体，其甲基相对效价比是胆碱的12-15倍。因此，甜菜碱的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000mg天然甜菜碱、0.8mg叶酸、2.8mg维生素B<sub>2</sub>、2.8mg维生素 B<sub>6</sub>以及4.8μg维生素B<sub>12</sub>的降同型半胱氨酸水平方案。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">胆碱<br />（Choline）</td>
+<td>`r str_c(params$data$Choline,"μmol/L",sep = " ")`</td>
+<td>＜ 8</td>
+<td>`r textResults$stated$"胆碱"`</td>
+</tr>
+<tr>
+<th colspan="4">胆碱是卵磷脂的组成成分，也存在于神经鞘磷脂中，是机体可变甲基的一个来源，参与甲基供体的合成与代谢。肠道细菌分解胆碱使之成形成甜菜碱并产生甲胺，甜菜碱再将甲基提供给同型半胱氨酸从而生成甲硫氨酸。胆碱缺乏膳食（不伴有叶酸缺乏）可降低SAM浓度。因此，胆碱的缺乏可能导致同型半胱氨酸代谢途径异常。胆碱广泛存在于蛋黄、肝脏、花生、麦胚、大豆中。正常成年男性膳食胆碱的适宜摄入量为500mg/d，正常成年女性膳食胆碱的适宜摄入量为400mg/d。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">维生素B<sub>2</sub><br />（VB<sub>2</sub>）</td>
+<td>`r str_c(params$data$VB2,"ng/mL",sep = " ")`</td>
+<td>＜ 1</td>
+<td>`r textResults$stated$"维生素B2"`</td>
+</tr>
+<tr>
+<th colspan="4">维生素B<sub>2</sub>又名核黄素，参与生物氧化反应，调节氨基酸、脂肪酸和碳水化合物的代谢，对神经细胞、视网膜代谢、脑垂体促肾上腺皮质激素的释放和胎儿的生长发育亦有影响。在同型半胱氨酸代谢通路中，5,10-亚甲基四氢叶酸转变为5-甲基四氢叶酸时，需要维生素B<sub>2</sub>作为辅酶参与反应。因此，维生素B<sub>2</sub>的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000mg天然甜菜碱、0.8mg叶酸、2.8mg维生素B<sub>2</sub>、2.8mg维生素B<sub>6</sub>以及4.8μg维生素B<sub>12</sub>的降同型半胱氨酸水平方案。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">S-腺苷甲硫氨酸<br />（SAM）</td>
+<td>`r str_c(params$data$SAM,"nmol/L",sep = " ")`</td>
+<td>＜ 33</td>
+<td>`r textResults$stated$"S-腺苷甲硫氨酸"`</td>
+</tr>
+<tr>
+<th colspan="4">SAM是体内重要的甲基供体，参与体内诸如DNA等物质甲基化反应。SAM具有维持细胞膜完整性、抗氧化、促进细胞再生等作用。SAM代谢异常能够造成相关基因的甲基化过程改变，最终影响动脉粥样硬化、脑卒中等心脑血管疾病的发生发展。SAM在临床上可用于减轻肝损伤、降低肝癌发生率、改善酒精性肝病患者临床症状、抑郁症、老年痴呆、关节炎等方面。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">S-腺苷同型半胱氨酸<br />（SAH）</td>
+<td>`r str_c(params$data$SAH,"nmol/L",sep = " ")`</td>
+<td>＜ 33</td>
+<td>`r textResults$stated$"S-腺苷同型半胱氨酸"`</td>
+</tr>
+<tr>
+<th colspan="4">SAH是SAM脱去甲基后的代谢产物，此过程由甲基转移酶催化，而SAH又是甲基转移酶的有效抑制剂，因此SAH也参与到了细胞内物质的甲基化过程中。相比于同型半胱氨酸，SAH是一种用于诊断心血管疾病的更加敏感的风险指标。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>风险切值</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">SAM/SAH</td>
+<td>`r str_c(params$data$"SAM/SAH","nmol/L",sep = " ")`</td>
+<td>＜ 2.2</td>
+<td>`r textResults$stated$"SAM/SAH"`</td>
+</tr>
+<tr>
+<th colspan="4">SAM/SAH的比值是衡量细胞甲基化水平的重要参数。DNA甲基化异常导致的基因过表达或沉默是表观遗传学的重要机制之一，与动脉粥样硬化的形成有关。</th>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>

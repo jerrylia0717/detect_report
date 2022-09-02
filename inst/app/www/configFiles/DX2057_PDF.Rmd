@@ -1,0 +1,354 @@
+---
+documentclass: ctexart
+header-includes:
+  # 调用ctex包，默认设置中文字体，默认字体为宋体，加粗为黑体，斜体为楷体
+- \usepackage{ctex}
+# 设置灰色阴影
+- \usepackage{xcolor}
+- \usepackage{framed}
+# 设置行距
+- \usepackage{setspace}
+# 设置页面大小，设置页边距
+- \usepackage{geometry}
+- \usepackage{graphicx}
+- \geometry{a4paper,left=2cm,right=2cm,top=1.5cm,bottom=2.5cm}
+# 页眉
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \pagenumbering{arabic}
+- \usepackage{tabu}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+- \usepackage{array}
+- \usepackage{lastpage}
+- \usepackage{makecell}
+- \rfoot{\thepage}
+- \cfoot{}
+- \setlength\headheight{30pt}
+# - \setCJKmainfont{SimSun}
+- \usepackage{amsmath}
+- \usepackage{unicode-math}
+- \usepackage{babel}
+- \defaultfontfeatures{ Scale=MatchLowercase, Ligatures = TeX }
+- \setmainfont{Times New Roman}
+- \setmathfont{latinmodern-math.otf}
+- \setmathfont[range=it]{Times New Roman}
+
+output:
+  rticles::ctex:
+    keep_tex: true
+    fig_caption: no
+    number_sections: no
+    toc: no
+
+params:
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
+rmarkdown::find_pandoc(version = "2.19.2")
+library(dplyr)
+library(kableExtra)
+library(xfun)
+library(showtext)
+showtext::showtext.auto()
+```
+
+
+\fancyhead[L]{\includegraphics[height=30pt, trim=0 0 0 0]{headerLeft.png}}
+\fancyhead[C]{\textcolor[RGB]{0,91,172}{\zihao{3}\textbf{深圳华大医学检验实验室}}}
+\fancyhead[R]{\textcolor{gray}{\zihao{6}\textbf{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()` \\受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`\\样本编号：`r params$sampleId`\\DX-MS-B27 V1.0\\}}}
+
+\fancyfoot[L]{\zihao{6}地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）客服电话：400-605-6655 网址：www.bgidx.cn}
+\fancyfoot[R]{\zihao{6}\thepage\ / \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.25pt}
+\renewcommand{\footrulewidth}{0.25pt}
+<!-- 设置行距 -->
+  <!-- 居中显示 -->
+  <!-- 设置字号：小三 -->
+  <!-- 粗体显示 -->
+  <!-- 根据institute变量显示标题 -->
+
+\colorlet{shadecolor}{gray!50}
+\singlespacing
+\begin{center}
+\zihao{3}
+\textbf{\\}
+\textbf{同型半胱氨酸代谢通路检测报告}
+\textbf{\\}
+\textbf{\\}
+\end{center}
+<!-- 加阴影 -->
+  <!-- 设置字号：五号 -->
+
+\begin{shaded}
+\zihao{4}
+\textbf{样本信息}
+\end{shaded}
+\zihao{5}
+
+
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\mbox{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()`}& \mbox{采血日期：`r params$sampleInfo %>% select("采样日期") %>% pull() %>% ymd()`} & \mbox{样本编号：`r params$sampleId`} \\ \mbox{受检者性别：`r params$sampleInfo %>% select("性别") %>% pull()`} & \mbox{接收日期：`r params$sampleInfo %>% select("入库时间") %>% pull()`} & \mbox{样本类型：全血} \\ 
+\mbox{受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`} & \mbox{检测日期：`r Sys.Date()`} & \mbox{送检科室：} \\
+\mbox{联系电话：`r params$sampleInfo %>% select("联系电话") %>% pull()`} & \mbox{ } & \mbox{检测方法：液相色谱串联质谱法} \\
+\mbox{送检单位：`r params$sampleInfo %>% select("送检单位") %>% pull()`} & \mbox{ } & \mbox{}\\
+\end{tabu}
+
+\begin{shaded}
+\zihao{4}
+\textbf{检测结果}
+\end{shaded}
+
+```{r fig.showtext = TRUE, warning = FALSE, out.width = "100%", message=FALSE}
+textResults <-
+  interprete_DX2057(data = params$data,
+                    reference = params$reference)
+
+tempResult <- tibble(
+  `检测指标` = c("同型半胱氨酸","5-甲基四氢叶酸","甲基丙二酸","4-吡哆酸","维生素$B_2$","甜菜碱","胆碱","S-腺苷甲硫氨酸","S-腺苷同型半胱氨酸","SAM/SAH"),
+  ch_compound = c("同型半胱氨酸","5-甲基四氢叶酸","甲基丙二酸","4-吡哆酸","维生素B2","甜菜碱","胆碱","S-腺苷甲硫氨酸","S-腺苷同型半胱氨酸","SAM/SAH"),
+  `英文缩写` = c("Hcy","5-MTHF","MMA","4-PA","V$B_2$","Betaine","Choline","SAM","SAH","SAM/SAH"),
+  `单位` = c("$\\mu mol/L$","$ng/mL$","$nmol/L$","$ng/mL$","$ng/mL$","$\\mu mol/L$","$\\mu mol/L$","$nmol/L$","$nmol/L$","$-$"),
+  `风险切值` = c("$\\geq$10","$<$4","$\\geq$318","$<$3","$<$1","$<$30","$<$8","$<$33","$\\geq$28.2","$<$2.2")) %>% 
+  left_join(textResults$marked,by = "ch_compound") %>% 
+  select(`检测指标`,`英文缩写`,`检测结果` = mark,`单位`,`风险切值`)
+
+kbl(tempResult,align = "c",escape = FALSE,booktabs = T,
+    format = "latex",linesep = "") %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T, font_size = 11.0) %>%
+  # row_spec(0, bold = T) %>%
+  column_spec(1,width = "5cm")
+```
+
+
+\begin{shaded}
+\zihao{4}
+\textbf{分析}
+\end{shaded}
+
+|       `r textResults$interpretation`
+
+\begin{shaded}
+\zihao{4}
+\textbf{声明}
+\end{shaded}
+
+\zihao{5}
+
+1、本检测结果只对本次送检样本负责，结果判读意见仅供参考，不作为诊断结果。  
+2、检测结果的解释及疾病诊断，请咨询相关医院专科医生。  
+3、本检测仅用于上述检测结果中所列举的检测指标。  
+4、该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。  
+
+\color{white}`r paste(rep("\\textbf{\\\\}", 11-floor(nchar(textResults$interpretation)/46)), sep = "")`
+
+ \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$
+ \hspace{3cm} \normalsize\color{black} 检测人：\tiny\color{white}\$result_seal_user_flag_A\$\hspace{2.5cm}\normalsize\color{black} 审核人：\tiny\color{white}\$result_seal_user_flag_B\$\hspace{2.5cm}\normalsize\color{black} 报告日期：`r Sys.Date()`
+ 
+ <!-- \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$ -->
+ <!-- \hspace{5cm} \normalsize\color{black} 检测人：张静钰\hspace{4cm}\normalsize\color{black} 审核人：廖云莉\hspace{4cm}\normalsize\color{black} 报告日期：`r Sys.Date()` -->
+ 
+\newpage
+
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{同型半胱氨酸及其代谢通路检测意义}
+\end{itemize}
+
+\zihao{5}
+|       同型半胱氨酸(homocysteine，Hcy)是一种含硫氨基酸，是甲硫氨酸脱甲基后的产物，这是同型半胱氨酸的唯一来源。《高同型半胱胺酸血症诊疗专家共识》将成人高同型半胱氨酸血症(Hcy$\geq10$ $\mu mol/L$)划分为轻度(10~15 $\mu mol/L$)、中度(15~30 $\mu mol/L$) 和重度(＞30 $\mu mol/L$)。高同型半胱氨酸血症通过甲基化和转硫化异常以及其他机制共同促进多种疾病的发生发展，与高血压等心脑血管疾病、神经系统疾病、肿瘤密切相关。多种因素可导致高同型半胱氨酸血症，遗传因素如同型半胱氨酸代谢关键酶失活、营养因素如因不良生活方式导致叶酸、维生素$B_6$、维生素$B_{12}$的消耗过多或者这些营养素摄入过少，都可引起同型半胱氨酸的升高。此外，年龄、性别、激素、药物和疾病等因素也可影响同型半胱氨酸水平。  
+
+|       开展同型半胱氨酸营养代谢检测，不仅可以明确同型半胱氨酸水平是否升高以及升高的严重程度，还可了解叶酸、维生素$B_{12}$、维生素$B_6$、甜菜碱等营养素的个体状况，从而指导精准营养干预，高效改善同型半胱氨酸水平。
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{高同型半胱氨酸血症的危害}
+\end{itemize}
+
+\zihao{5}
+|       \textbf{高血压}  
+
+|       高同型半胱氨酸血症通过抑制体内内源性硫化氢的生成活化血管紧张素转换酶，产生血管紧张素Ⅱ作用于血管紧张素I型受体，从而导致血压的升高及血管增生等一系列病理过程。  
+
+|       同型半胱氨酸水平越高，高血压患病率越高。Hcy$\geq10$ $\mu mol/L$者，高血压患病率31.4\%，Hcy$\geq15$  $\mu mol/L$者，高血压患病率39.2\%。  
+
+|       高血压患者中，高同型半胱氨酸血症比例高。H型高血压：血Hcy$\geq10$  $\mu mol/L$的高血压，我国高血压患者中有约75\%为H型高血压。
+
+|       \textbf{脑卒中}  
+
+|       高同型半胱氨酸血症是引发脑卒中的独立性危险因素。  
+
+|       Hcy$\geq10.5$ $\mu mol/L$者，脑卒中风险增加到4.2倍。  
+
+|       H型高血压患者罹患脑卒中风险是单独高血压患者的4倍。
+
+|       \textbf{缺血性心脏病}  
+
+|       动脉粥样硬化的形成归因于同型半胱氨酸化脂蛋白与微生物的聚集,在动脉易损斑块形成过程中阻塞了血管,进而发生心血管事件。  
+
+|       所有冠状动脉疾病的10\%归因于高同型半胱氨酸水平。  
+
+|       同型半胱氨酸水平每增加5 $\mu mol/L$会使缺血性心脏病的风险增加84\%。
+
+
+|       \textbf{骨质疏松}  
+
+|       高同型半胱氨酸血症对成骨细胞和破骨细胞具有有害作用，破坏胶原分子的交联，减少骨量，从而导致骨强度降低。  
+
+|       男性高同型半胱氨酸血症患者在3年内发生骨折的风险值为3.8。  
+
+|       女性高同型半胱氨酸血症患者在3年内发生骨折的风险值为2.8。
+
+|       \textbf{糖尿病并发症}  
+
+|       伴有高同型半胱氨酸血症的糖尿病患者更易发生大血管损伤和微血管病变。  
+
+|       同型半胱氨酸水平每增加5 $\mu mol/L$，发生神经病变的风险增加2.3倍。  
+
+|       同型半胱氨酸水平每增加5 $\mu mol/L$，发生糖尿病肾病的风险增加3.86倍。
+
+|       \textbf{慢性肾病}  
+
+|       肾脏在同型半胱氨酸的代谢清除中发挥了关键的作用。高同型半胱氨酸血症与肾功能减退和肾小球滤过率负相关，是慢性肾脏病进展的独立危险因素。  
+
+|       Hcy＜22.9 $\mu mol/L$的肾透析患者5年生存率可以超过95\%。  
+
+|       Hcy＞37.8 $\mu mol/L$的肾透析患者5年生存率不足65\%。
+
+|       \textbf{肝脏疾病}  
+
+|       肝脏是同型半胱氨酸代谢的重要器官,当肝细胞发生损伤时会升高同型半胱氨酸的水平，高同型半胱氨酸血症又能增强氧化应激，引起肝脏脂质过氧化，诱导肝细胞损伤和凋亡，加重肝损伤。  
+
+|       同型半胱氨酸水平分别为＜5.1 $\mu mol/L$、5.1-7.1 $\mu mol/L$、7.1-9.9 $\mu mol/L$和$\geq9.9$  $\mu mol/L$的人群,导致非酒精性脂肪肝的患病率分别为19.8\%、28.3\%、37.7\%和 46.6\%。
+
+|       \textbf{肿瘤}  
+
+|       肿瘤与DNA合成和甲基化异常密切相关。同型半胱氨酸代谢过程中如果S-腺苷甲硫氨酸(S-adenosyl  methionine, SAM)生成抑制或受阻，可导致 DNA 甲基化紊乱，造成基因表达抑制、染色体的失活等。  
+
+|       亚洲人群中高水平的tHcy与多种肿瘤相关，风险值平均为6.87。
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{高同型半胱氨酸血症的改善措施}
+\end{itemize}
+
+\zihao{5}
+|       \textbf{1.健康生活方式干预：}戒烟、限酒、合理膳食、增加运动量,有助于降低同型半胱氨酸水平。  
+
+|       \textbf{2.营养治疗：}临床中可以根据 MTHFR、MTRR 基因的多态性结合叶酸、维生素B12、维生素B6、胆碱、甜菜碱等营养素水平制订个性化的精准补充方案。 对非基因突变的高血同患者，应根据叶酸、维生素$B_{12}$、维生素$B_6$、胆碱的检查结果，重点补充严重缺乏的营养素。
+
+
+
+\begin{center}
+\zihao{4}
+\textbf{同型半胱氨酸及其代谢通路检测指标简介}
+\end{center}
+
+
+\zihao{5}
+\centering
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{同型半胱氨酸} \\ \zihao{5}\textbf{（Hcy）}}& `r str_split(textResults$marked %>% filter(ch_compound == "同型半胱氨酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $\mu mol/L$ & \thead{\zihao{5}$\geq10$（轻度升高） \\ \zihao{5}$\geq15$（中度升高） \\ \zihao{5}$\geq30$（重度升高）}& `r textResults$stated$"同型半胱氨酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{同型半胱氨酸是一种含硫氨基酸，是甲硫氨酸脱甲基后的产物。同型半胱氨酸水平过高会增加高血压等心脑血管疾病、神经系统疾病、肿瘤等患病风险。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{5-甲基四氢叶酸} \\ \zihao{5}\textbf{（5-MTHF）}}& `r str_split(textResults$marked %>% filter(ch_compound == "5-甲基四氢叶酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $ng/mL$ & $<4$ & `r textResults$stated$"5-甲基四氢叶酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{食物中摄入的叶酸在体内转化为5-甲基四氢叶酸，5-甲基四氢叶酸再以维生素$B_{12}$为转运载体将甲基供给同型半胱氨酸生成甲硫氨酸。因此，5-甲基四氢叶酸的缺乏可能导致同型半胱氨酸代谢途径异常。$\ll$高血压学$\gg$推荐每天1000 mg天然甜菜碱、0.8 mg叶酸、2.8 mg维生素$B_2$、2.8 mg维生素 $B_6$以及4.8 $\mu$g维生素$B_{12}$的降同型半胱氨酸水平方案。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{甲基丙二酸} \\ \zihao{5}\textbf{（MMA）}}& `r str_split(textResults$marked %>% filter(ch_compound == "甲基丙二酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $nmol/L$ & $\geq318$ & `r textResults$stated$"甲基丙二酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{甲基丙二酸是人体对于某些氨基酸和脂肪的代谢存在异常时产生的物质，甲基丙二酸水平过高提示了维生素$B_{12}$可能缺乏或存在代谢异常，可用于评估维生素$B_{12}$的营养情况。维生素$B_{12}$是5-甲基四氢叶酸将甲基供给同型半胱氨酸时生成甲硫氨酸时的转运载体。因此，维生素$B_{12}$的缺乏可能导致同型半胱氨酸代谢途径异常。$\ll$高血压学$\gg$推荐每天1000 mg天然甜菜碱、0.8 mg叶酸、2.8 mg维生素$B_2$、2.8 mg维生素 $B_6$以及4.8 $\mu$g维生素$B_{12}$的降同型半胱氨酸水平方案。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{4-吡哆酸} \\ \zihao{5}\textbf{（4-PA）}}& `r str_split(textResults$marked %>% filter(ch_compound == "4-吡哆酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $ng/mL$ & $<3$ & `r textResults$stated$"4-吡哆酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{维生素$B_6$又称为吡哆素，4-吡哆酸是维生素$B_6$在人体内的代谢终产物，可反应人体维生素$B_6$的水平。同型半胱氨酸可通过叶酸途径完成再甲基化，维生素$B_6$是四氢叶酸转变为5,10-亚甲基四氢叶酸过程中的辅酶；同时也是转硫途径中同型半胱氨酸转变为胱氨酸时的辅酶。因此，维生素$B_6$的缺乏可能导致同型半胱氨酸代谢途径异常。$\ll$高血压学$\gg$推荐每天1000 mg天然甜菜碱、0.8 mg叶酸、2.8 mg维生素$B_2$、2.8 mg维生素 $B_6$以及4.8 $\mu$g维生素$B_{12}$的降同型半胱氨酸水平方案。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{甜菜碱} \\ \zihao{5}\textbf{（Betaine）}}& `r str_split(textResults$marked %>% filter(ch_compound == "甜菜碱") %>% select(mark) %>% pull(),"  ")[[1]][1]` $\mu mol/L$ & $<30$ & `r textResults$stated$"甜菜碱"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{甜菜碱是一种生物碱，广泛存在于动植物体内。甜菜碱可直接将甲基提供给同型半胱氨酸从而生成甲硫氨酸。天然甜菜碱可以为机体提供3个甲基，是体内最为高效的甲基供体，其甲基相对效价比是胆碱的12-15倍。因此，甜菜碱的缺乏可能导致同型半胱氨酸代谢途径异常。$\ll$高血压学$\gg$推荐每天1000 mg天然甜菜碱、0.8 mg叶酸、2.8 mg维生素$B_2$、2.8 mg维生素 $B_6$以及4.8 $\mu$g维生素$B_{12}$的降同型半胱氨酸水平方案。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{胆碱} \\ \zihao{5}\textbf{（Choline）}}& `r str_split(textResults$marked %>% filter(ch_compound == "胆碱") %>% select(mark) %>% pull(),"  ")[[1]][1]` $\mu mol/L$ & $<8$ & `r textResults$stated$"胆碱"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{胆碱是卵磷脂的组成成分，也存在于神经鞘磷脂中，是机体可变甲基的一个来源，参与甲基供体的合成与代谢。肠道细菌分解胆碱使之成形成甜菜碱并产生甲胺，甜菜碱再将甲基提供给同型半胱氨酸从而生成甲硫氨酸。胆碱缺乏膳食（不伴有叶酸缺乏）可降低SAM浓度。因此，胆碱的缺乏可能导致同型半胱氨酸代谢途径异常。胆碱广泛存在于蛋黄、肝脏、花生、麦胚、大豆中。正常成年男性膳食胆碱的适宜摄入量为500 mg/d，正常成年女性膳食胆碱的适宜摄入量为400 mg/d。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{维生素$B_2$} \\ \zihao{5}\textbf{（V$B_2$）}}& `r str_split(textResults$marked %>% filter(ch_compound == "维生素B2") %>% select(mark) %>% pull(),"  ")[[1]][1]` $ng/mL$ & $<1$ & `r textResults$stated$"维生素B2"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{维生素$B_2$又名核黄素，参与生物氧化反应，调节氨基酸、脂肪酸和碳水化合物的代谢，对神经细胞、视网膜代谢、脑垂体促肾上腺皮质激素的释放和胎儿的生长发育亦有影响。在同型半胱氨酸代谢通路中，5,10-亚甲基四氢叶酸转变为5-甲基四氢叶酸时，需要维生素$B_2$作为辅酶参与反应。因此，维生素$B_2$的缺乏可能导致同型半胱氨酸代谢途径异常。《高血压学》推荐每天1000 mg天然甜菜碱、0.8 mg叶酸、2.8 mg维生素$B_2$、2.8 mg维生素 $B_6$以及4.8 $\mu$g维生素$B_{12}$的降同型半胱氨酸水平方案。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{S-腺苷甲硫氨酸} \\ \zihao{5}\textbf{（SAM）}}& `r str_split(textResults$marked %>% filter(ch_compound == "S-腺苷甲硫氨酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $nmol/L$ & $<33$ & `r textResults$stated$"S-腺苷甲硫氨酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{SAM是体内重要的甲基供体，参与体内诸如DNA等物质甲基化反应。SAM具有维持细胞膜完整性、抗氧化、促进细胞再生等作用。SAM代谢异常能够造成相关基因的甲基化过程改变，最终影响动脉粥样硬化、脑卒中等心脑血管疾病的发生发展。SAM在临床上可用于减轻肝损伤、降低肝癌发生率、改善酒精性肝病患者临床症状、抑郁症、老年痴呆、关节炎等方面。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{S-腺苷同型半胱氨酸} \\ \zihao{5}\textbf{（SAH）}}& `r str_split(textResults$marked %>% filter(ch_compound == "S-腺苷同型半胱氨酸") %>% select(mark) %>% pull(),"  ")[[1]][1]` $nmol/L$ & $\ge28.2$ & `r textResults$stated$"S-腺苷同型半胱氨酸"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{SAH是SAM脱去甲基后的代谢产物，此过程由甲基转移酶催化，而SAH又是甲基转移酶的有效抑制剂，因此SAH也参与到了细胞内物质的甲基化过程中。相比于同型半胱氨酸，SAH是一种用于诊断心血管疾病的更加敏感的风险指标。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{风险切值}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{SAM/SAH}}& `r str_split(textResults$marked %>% filter(ch_compound == "SAM/SAH") %>% select(mark) %>% pull(),"  ")[[1]][1]` & $<2.2$ & `r textResults$stated$"SAM/SAH"` \\
+\hline
+\multicolumn{4}{|p{15.5cm}|}{SAM/SAH的比值是衡量细胞甲基化水平的重要参数。DNA甲基化异常导致的基因过表达或沉默是表观遗传学的重要机制之一，与动脉粥样硬化的形成有关。} \\
+\hline
+\end{tabular}

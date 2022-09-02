@@ -903,25 +903,39 @@
 # library(tidyverse)
 # library(readxl)
 hor <-
-  read_xlsx("D:/outputs/reports/20220805_HOR_234/20220802_0146_04761_HOR_234 -TJ.xlsx") %>%
+  read_xlsx("D:/outputs/reports/20220810_HOR_106/20220808_0146_04782_HOR_106.xlsx") %>%
   mutate(across(-`Sample Name`, .fns = round, 2))
 
+
 sampleInfo <-
-  read_xlsx("D:/outputs/员工体检数据汇总/1660008808973营养及内分泌代谢检测数据(1).xlsx") %>%
-  select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`) %>%
+  read_xlsx("D:/outputs/1662083983427营养及内分泌代谢检测数据.xlsx") %>%
+  # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
+  select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`, `采样时间`, `出生日期`, `年龄`) %>%
+  filter(`Sample Name` == "MS22491") %>%
   mutate(`Sample Name` = toupper(`Sample Name`)) %>%
-  mutate(`年龄` = map_dbl(
-    .x = `证件号`,
-    .f = ~ interval(ymd(substring(as.character(.x),7,14)),ymd("20220809")) / years(1)
+  mutate(`年龄` = pmap_dbl(
+    .l = list(
+      ..1 = `年龄`,
+      ..2 = `出生日期`,
+      ..3 = `采样时间`,
+      ..4 = `证件号`
+    ),
+    .f = ~ case_when(
+      !is.na(..1) ~ as.numeric(..1),
+      all(!is.na(..2),!is.na(..3)) ~ interval(ymd(..2), ymd(str_split(..3," ")[[1]][1])) / years(1),
+      all(!is.na(..4),!is.na(..3)) ~ interval(ymd(substring(
+        as.character(..4), 7, 14
+      )), ymd(str_split(..3," ")[[1]][1])) / years(1)
+    )
   )) %>%
-  mutate(across(.cols = `年龄`, .fns = round,0))
+  mutate(across(.cols = `年龄`, .fns = round, 0))
 
 data_combine <- hor %>%
   nest(data = -`Sample Name`) %>%
   left_join(sampleInfo, by = "Sample Name") %>%
-  # filter(!is.na(`性别`),!is.na(`年龄`)) %>%
-  filter(`Sample Name` %in% c("MS21712","MS21744")) %>%
-  # mutate(`年龄` = c(29,28)) %>%
+  filter(!is.na(`年龄`)) %>%
+  # filter(`Sample Name` %in% c("MS13110")) %>%
+  # mutate(`年龄` = 29) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
 #
 library(openxlsx)
@@ -944,7 +958,7 @@ pwalk(
       reference = dx1597_ref,
       interpretation = dx1597_inp
     ),
-    output_dir = "D:/outputs/员工体检数据汇总/",
+    output_dir = "D:/outputs/reports/",
     output_file = paste0("DX1597_",..1,".html",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
@@ -1012,34 +1026,36 @@ pwalk(
 
 #---------------------------------
 
-fsv <- read_xlsx('D:/outputs/reports/20220728_FSV_139/20220727_J220727087_FSV_139_YG.xlsx') %>%
+fsv <- read_xlsx('D:/outputs/reports/20220809_FSV_105/20220806_0146_04774_FSV_105_YGHD .xlsx') %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 
 sampleInfo <-
-  read_xlsx("D:/outputs/员工体检数据汇总/1660549663589营养及内分泌代谢检测数据.xlsx") %>%
+  read_xlsx("D:/outputs/营养及内分泌代谢检测数据-20220823.xlsx") %>%
   select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`) %>%
   mutate(`Sample Name` = toupper(`Sample Name`)) %>%
   mutate(`年龄` = map_dbl(
     .x = `证件号`,
-    .f = ~ interval(ymd(substring(as.character(.x),7,14)),ymd("20220809")) / years(1)
+    .f = ~ interval(ymd(substring(as.character(.x),7,14)),ymd("20220821")) / years(1)
   )) %>%
   mutate(across(.cols = `年龄`, .fns = round,0))
 
-sampleInfo11 <-
-  read_xlsx("D:/outputs/员工体检数据汇总/1660549663589营养及内分泌代谢检测数据.xlsx") %>%
-  select(`Sample Name` = `绑定的样本编码`, `性别`, `出生日期`) %>%
-  filter(`Sample Name` %in% c("MS21955","MS22539")) %>%
-  mutate(`Sample Name` = toupper(`Sample Name`)) %>%
-  mutate(`年龄` = map_dbl(
-    .x = `出生日期`,
-    .f = ~ interval(ymd(as.character(.x)),ymd("20220809")) / years(1)
-  )) %>%
-  mutate(across(.cols = `年龄`, .fns = round,0))
+# sampleInfo11 <-
+#   read_xlsx("D:/outputs/员工体检数据汇总/1660549663589营养及内分泌代谢检测数据.xlsx") %>%
+#   select(`Sample Name` = `绑定的样本编码`, `性别`, `出生日期`) %>%
+#   filter(`Sample Name` %in% c("MS21955","MS22539")) %>%
+#   mutate(`Sample Name` = toupper(`Sample Name`)) %>%
+#   mutate(`年龄` = map_dbl(
+#     .x = `出生日期`,
+#     .f = ~ interval(ymd(as.character(.x)),ymd("20220809")) / years(1)
+#   )) %>%
+#   mutate(across(.cols = `年龄`, .fns = round,0))
 
 data_combine <- fsv %>%
   nest(data = -`Sample Name`) %>%
   left_join(sampleInfo, by = "Sample Name") %>%
-  filter(`Sample Name` %in% c("MS21744")) %>%
+  filter(!is.na(`年龄`)) %>%
+  # mutate(`年龄` = 65) %>%
+  # filter(`Sample Name` %in% c("MS22888")) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
 
 pwalk(
@@ -1057,30 +1073,33 @@ pwalk(
       reference = dx1736_ref,
       interpretation = dx1736_inp
     ),
-    output_dir = "D:/outputs/reports/20220815_FSV_126/",
+    output_dir = "D:/outputs/reports/",
     output_file = paste0("DX1736_",..1,".html",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
   )
 )
-
 # ==============================20220802——FSV--54==========================================
-fsv <- read_xlsx('D:/outputs/reports/20220815_FSV_126/20220813_0146_04795__FSV_126.xlsx') %>%
+fsv <- read_xlsx('D:/outputs/reports/20220821_FSV_61/20220819_0315_00306_FSV_61.xlsx') %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 
 sampleInfo <-
-  read_xlsx(
-    "D:/outputs/员工体检数据汇总/1660549663589营养及内分泌代谢检测数据.xlsx"
-  ) %>%
-  select(`Sample Name` = `绑定的样本编码`,`性别`,`年龄`) %>%
+  read_xlsx("D:/outputs/reports/20220818_FSV_109/2022-08-18营养及内分泌代谢检测数据.xlsx") %>%
+  # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
+  select(`Sample Name` = `绑定的样本编码`, `性别`) %>%
+  # filter(`Sample Name` == "MS13036") %>%
   mutate(`Sample Name` = toupper(`Sample Name`)) %>%
-  mutate(across(.cols = `年龄`,.fns = as.numeric))
+  mutate(`年龄` = interval(ymd(19990626),ymd("20220818")) / years(1)
+  ) %>%
+  mutate(across(.cols = `年龄`, .fns = round,0))
 
 data_combine <- fsv %>%
   nest(data = -`Sample Name`) %>%
   left_join(sampleInfo, by = "Sample Name") %>%
-  filter(`Sample Name` %in% c("MS21955","MS22539")) %>%
-  mutate(`年龄` = c(66,35)) %>%
+  # filter(`Sample Name` %in% c("MS21955","MS22539")) %>%
+  # mutate(`年龄` = as.numeric(`性别`)) %>%
+
+  filter(is.na(`性别`)) %>%
   # filter(!(`Sample Name` %in% c("MS21751","MS21752","MS22498"))) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
 
@@ -1099,7 +1118,7 @@ pwalk(
       reference = dx1736_ref,
       interpretation = dx1736_inp
     ),
-    output_dir = "D:/outputs/reports/20220805_FSV_9/",
+    output_dir = "D:/outputs/reports/20220818_FSV_109/",
     output_file = paste0("DX1736_",..1,".html",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
@@ -1107,13 +1126,13 @@ pwalk(
 )
 #
 # # ===================================20220804-心脑血管报告==============================
-dx2059 <- read_xlsx("D:/outputs/reports/20220811_心血管报告/副本20220810_0146_04784_TMAO_5(1).xlsx") %>%
+dx2059 <- read_xlsx("D:/outputs/reports/20220829_cardio/20220826_0146_04832_TMAO_6.xlsx") %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 # #
 sampleInfo2 <- read_xlsx("D:/outputs/reports/20220804_心脑血管报告/接收日期.xlsx")
 #
 sampleInfo1 <-
-  read_xlsx("D:\\outputs\\reports\\20220815_心血管报告/廊坊心脑血管产品送检表.xlsx") %>%
+  read_xlsx("D:\\outputs\\reports\\20220817_cardio/廊坊心脑血管产品送检表.xlsx") %>%
   select(`实验室编号(样本编号)`,
          `姓名`,
          `采样日期`,
@@ -1128,37 +1147,22 @@ sampleInfo1 <-
   mutate(`入库时间` = map_chr(.x = `接收日期`, .f = ~ as.character(ymd(.x)))) %>%
   mutate(`采样日期` = map_chr(.x = `采样日期`, .f = ~ as.character(ymd(.x)))) %>%
   mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-07-20")) / years(1), 0))
-# %>%
-#   slice(2) %>%
-#   mutate(`联系电话` = " ")
-#
-# sampleInfo3 <-
-#   read_xlsx("D:\\outputs\\reports\\20220804_心脑血管报告\\数据表1656295372734(1)(3)(2).xlsx") %>%
-#   select(`实验室编号(样本编号)`,
-#          `姓名`,
-#          `采样日期`,
-#          `性别`,
-#          `入库时间`,
-#          `出生日期`,
-#          `联系电话`,
-#          `送检单位`,
-#          `年龄`) %>%
-#   left_join(sampleInfo2,by = c("实验室编号(样本编号)" = "Sample Name")) %>%
-#   # filter(`实验室编号(样本编号)` %in% dx2059$`Sample Name`) %>%
-#   mutate(`入库时间` = map_chr(.x = `接收日期`, .f = ~ as.character(ymd(.x)))) %>%
-#   # mutate(`采样日期` = c("2022-07-26","2022-07-26","2022-07-26","2022-07-30")) %>%
-#   mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-07-20")) / years(1), 0))
-# #
-# #
-# #
+
+
+sampleInfo3 <- read_xls("D:/outputs/reports/20220823_cardio/sample info.xls",sheet = 2) %>%
+  select("实验室编号(样本编号)" = "样品编号","姓名","采样日期" = "样品采集日期","性别",
+         "出生日期","联系电话" = "电话","送检单位","年龄","入库时间" = "到样日期") %>%
+  mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-08-17")) / years(1), 0)) %>%
+  distinct()
+
 data_combine <- dx2059 %>%
   nest(data = -`Sample Name`) %>%
-  left_join(sampleInfo1, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
-  # filter(!is.na(`姓名`)) %>%
-  mutate(`入库时间` = ymd("20220804")) %>%
-  mutate(`联系电话` = map_chr(.x = `联系电话`,.f = ~ case_when(is.na(.x) ~ " ",
-                                                       TRUE ~ .x))) %>%
+  left_join(sampleInfo3, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+  filter(!is.na(`性别`)) %>%
+  # select("Sample Name",data,`性别`,`年龄`) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
+
+dx2059_lack <- data_combine$`Sample Name`
 # #
 # # data_combine2 <- dx2059 %>%
 # #   nest(data = -`Sample Name`) %>%
@@ -1175,6 +1179,27 @@ pwalk(
     ..3 = data_combine$sampleInfo
   ),
   .f = ~ render(
+    "D:/outputs/configFiles/DX2059_HTML.Rmd",
+    params = list(
+      sampleId = ..1,
+      data = ..2,
+      sampleInfo = ..3,
+      reference = dx2059_ref
+    ),
+    output_dir = "D:/outputs/reports/20220823_cardio/",
+    output_file = paste0("DX2059_",..1,".html",collapse = ""),
+    encoding = "UTF-8",
+    clean = TRUE
+  )
+)
+
+pwalk(
+  .l = list(
+    ..1 = data_combine$`Sample Name`,
+    ..2 = data_combine$data,
+    ..3 = data_combine$sampleInfo
+  ),
+  .f = ~ render(
     "D:/outputs/configFiles/DX2059_PDF.Rmd",
     params = list(
       sampleId = ..1,
@@ -1182,29 +1207,33 @@ pwalk(
       sampleInfo = ..3,
       reference = dx2059_ref
     ),
-    output_dir = "D:/outputs/reports/20220811_心血管报告/",
+    output_dir = "D:/outputs/reports/20220829_cardio/",
     output_file = paste0(..1,"_DX2059_正式报告_中文_其他",".pdf",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
   )
 )
 # #
-dx2058 <- read_xlsx("D:/outputs/reports/20220811_心血管报告/20220809_SJXA_7.xlsx") %>%
+dx2058 <- read_xlsx("D:/outputs/reports/20220829_cardio/20220826_0146_04833_sjxa_6.xlsx") %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 #
-sampleInfo3 <- read_xls("D:/outputs/reports/20220811_心血管报告/sample (7).xls") %>%
+sampleInfo3 <- read_xls("D:/outputs/reports/20220829_cardio/sample info.xls") %>%
   select("实验室编号(样本编号)" = "样品编号","姓名","采样日期" = "样品采集日期","性别",
-         "出生日期","联系电话" = "电话","送检单位","年龄") %>%
-  slice(c(1,6))
+         "出生日期","联系电话" = "电话","送检单位","年龄","入库时间" = "到样日期") %>%
+  mutate(`年龄` = map2_dbl(.x = `年龄`,.y = `出生日期`,
+                         .f = ~case_when(is.na(.x) ~ round(interval(ymd(.y), ymd("2022-08-29")) / years(1), 0),
+                                         TRUE ~ as.numeric(.x)
+                                         ))) %>%
+  distinct()
 
 data_combine11 <- dx2058 %>%
   nest(data = -`Sample Name`) %>%
   left_join(sampleInfo3, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
-  mutate(`入库时间` = ymd("20220805")) %>%
-  mutate(`联系电话` = map_chr(.x = `联系电话`,.f = ~ case_when(is.na(.x) ~ " ",
-                                                       TRUE ~ .x))) %>%
-  filter(!is.na(`姓名`)) %>%
+  filter(!is.na(`性别`)) %>%
+  # select("Sample Name",data,`性别`,`年龄`) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
+
+dx2058_lack <- data_combine11$`Sample Name`
 #
 # data_combine12 <- dx2058 %>%
 #   nest(data = -`Sample Name`) %>%
@@ -1250,25 +1279,87 @@ pwalk(
       sampleInfo = ..3,
       reference = dx2058_ref
     ),
-    output_dir = "D:/outputs/reports/20220811_心血管报告/",
+    output_dir = "D:/outputs/reports/20220829_cardio/",
     output_file = paste0(..1,"_DX2058_正式报告_中文_其他",".pdf",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
   )
 )
+
+pwalk(
+  .l = list(
+    ..1 = data_combine11$`Sample Name`,
+    ..2 = data_combine11$data,
+    ..3 = data_combine11$sampleInfo
+  ),
+  .f = ~ render(
+    "D:/outputs/configFiles/DX2058_HTML.Rmd",
+    params = list(
+      sampleId = ..1,
+      data = ..2,
+      sampleInfo = ..3,
+      reference = dx2058_ref
+    ),
+    output_dir = "D:/outputs/reports/20220823_cardio/",
+    output_file = paste0("DX2058_",..1,".html",collapse = ""),
+    encoding = "UTF-8",
+    clean = TRUE
+  )
+)
 # #
-dx2056 <- read_xlsx("D:/outputs/reports/20220815_心血管报告/20220812_0146_04790_HCY_6.xlsx") %>%
+# =====================20220819===============
+dx2056 <- read_xlsx("D:/outputs/reports/20220831_cardio/20220830_0146_04837_HCY_10.xlsx") %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 
 dx2056_ref <- read_xlsx("D:/outputs/configFiles/DX2056_reference.xlsx")
 
+sampleInfo <-
+  read_xlsx("D:/outputs/reports/20220818_FSV_109/2022-08-18营养及内分泌代谢检测数据.xlsx") %>%
+  select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`) %>%
+  # select(`Sample Name` = `绑定的样本编码`, `性别`) %>%
+  # filter(`Sample Name` == "MS13036") %>%
+  mutate(`Sample Name` = toupper(`Sample Name`)) %>%
+  mutate(`年龄` = map_dbl(.x = `证件号`,
+                        .f = ~ interval(ymd(
+                          substring(as.character(.x), 7, 14)
+                        ), ymd("20220809")) / years(1))) %>%
+  mutate(across(.cols = `年龄`, .fns = round, 0))
+
+sampleInfo1 <- read_xls("D:/outputs/reports/20220831_cardio/sample info.xls",sheet = 2) %>%
+  select("实验室编号(样本编号)" = "样品编号","姓名","采样日期" = "样品采集日期","性别",
+         "出生日期","联系电话" = "电话","送检单位","年龄","入库时间" = "到样日期") %>%
+  mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-08-31")) / years(1), 0)) %>%
+  distinct() %>%
+  mutate(`年龄` = map_chr(.x = `年龄`,.f = ~case_when(is.na(.x) ~ " ",
+                                                  TRUE ~ as.character(.x))))
+
+sampleInfo5 <-
+  read_xlsx("D:\\outputs\\reports\\20220817_cardio/廊坊心脑血管产品送检表.xlsx") %>%
+  select(`实验室编号(样本编号)`,
+         `姓名`,
+         `采样日期`,
+         `性别`,
+         `出生日期`,
+         `联系电话`,
+         `送检单位`,
+         `到样日期`,
+         `年龄`) %>%
+  # filter(`实验室编号(样本编号)` %in% c("22S26330726","22S26330727")) %>%
+  mutate(across(.cols = `联系电话`,.fns = as.character)) %>%
+  left_join(sampleInfo2,by = c("实验室编号(样本编号)" = "Sample Name")) %>%
+  mutate(`入库时间` = map_chr(.x = `到样日期`, .f = ~ as.character(ymd(.x)))) %>%
+  mutate(`采样日期` = map_chr(.x = `采样日期`, .f = ~ as.character(ymd(.x)))) %>%
+  mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-08-19")) / years(1), 0)) %>%
+  mutate(`联系电话` = " ")
+
 data_combine21 <- dx2056 %>%
   nest(data = -`Sample Name`) %>%
   left_join(sampleInfo1, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+  # left_join(sampleInfo, by = "Sample Name") %>%
   filter(!is.na(`性别`)) %>%
-  mutate(`联系电话` = map_chr(.x = `联系电话`,.f = ~case_when(is.na(.x) ~ " ",
-                                                      TRUE ~ as.character(.x)))) %>%
-  mutate(`入库时间` = ymd(20220804)) %>%
+  # mutate(`联系电话` = map_chr(.x = `联系电话`,.f = ~case_when(is.na(.x) ~ " ",
+  #                                                     TRUE ~ as.character(.x)))) %>%
+  # mutate(`入库时间` = ymd(20220804)) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
 
 sampleInfo5 <- read_xls("D:/outputs/reports/20220815_心血管报告/sample.xls") %>%
@@ -1285,8 +1376,29 @@ sampleInfo5 <- read_xls("D:/outputs/reports/20220815_心血管报告/sample.xls"
   # mutate(`采样日期` = c("2022-07-26","2022-07-26","2022-07-26","2022-07-30")) %>%
   mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-08-15")) / years(1), 0)) %>%
   mutate(across(.cols = `联系电话`,.fns = as.character)) %>%
-  slice(1) %>%
+  # slice(1) %>%
   mutate(`入库时间` = c("2022-08-09"))
+
+pwalk(
+  .l = list(
+    ..1 = data_combine21$`Sample Name`,
+    ..2 = data_combine21$data,
+    ..3 = data_combine21$sampleInfo
+  ),
+  .f = ~ render(
+    "D:/outputs/configFiles/DX2056_HTML.Rmd",
+    params = list(
+      sampleId = ..1,
+      data = ..2,
+      sampleInfo = ..3,
+      reference = dx2056_ref
+    ),
+    output_dir = "D:/outputs/reports/20220823_cardio/",
+    output_file = paste0("DX2056_",..1,".html",collapse = ""),
+    encoding = "UTF-8",
+    clean = TRUE
+  )
+)
 
 pwalk(
   .l = list(
@@ -1302,12 +1414,13 @@ pwalk(
       sampleInfo = ..3,
       reference = dx2056_ref
     ),
-    output_dir = "D:/outputs/reports/20220815_心血管报告/",
+    output_dir = "D:/outputs/reports/20220831_cardio//",
     output_file = paste0(..1,"_DX2056_正式报告_中文_其他",".pdf",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
   )
 )
+
 #
 # dx2057 <- read_xlsx("D:/outputs/reports/20220804_心脑血管报告/副本20220803_0146_04770_HCY_3（DX2057）.xlsx") %>%
 #   mutate(across(-`Sample Name`,.fns = round,2))
@@ -1347,5 +1460,11 @@ pwalk(
 #     mutate(`Sample Name` = toupper(`Sample Name`)) %>%
 #     mutate(across(.cols = `年龄`,.fns = as.numeric))
 
+a <- tibble(rawFiles = list.files("D:/20220817_心脑血管_HTML/")) %>%
+  mutate(subname = map_chr(.x = rawFiles,.f = ~str_remove(.x,".html"))) %>%
+  filter(str_detect(subname,"DX2059")) %>%
+  mutate(sampleId = map_chr(.x = subname,.f = ~str_split(.x,"_")[[1]][2]))
 
+library(openxlsx)
 
+write.xlsx(a %>% select(sampleId),file = "D:/sample_dx2059.xlsx")

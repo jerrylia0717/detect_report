@@ -1,0 +1,311 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  sampleInfo: sampleInfo
+  reference: reference
+  interpretation: interpretation
+title: 人体类固醇激素检测报告
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(tidyr)
+library(plotly)
+```
+<head>
+<style>
+html {
+font-weight:normal;
+}
+h1.title {
+text-align:center;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:1.4em;
+font-family:"Times New Roman", Times, serif;
+}
+h3 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight: bolder;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.4em;
+}
+<!-- table tr:first-child { -->
+<!-- font-weight: bolder; -->
+<!-- } -->
+td.item {
+font-weight: bolder;
+}
+td.c1 {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+td.c2 {
+height:50px;
+text-align:left;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+</style>
+</head>
+
+
+<html>
+<body>
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE,fig.align='center'}
+# dateInterval <-
+#   interval(params$sampleInfo$"出生日期", params$sampleInfo$"检测日期") / years(1)
+dateInterval <- params$sampleInfo$"年龄"
+
+if (dateInterval >= 1) {
+  reference_filter <- params$reference %>%
+    filter(
+      timeUnit == "year",
+      dateInterval > age_lower,
+      dateInterval <= age_upper,
+      gender == params$sampleInfo$"性别"
+    )
+} else if (dateInterval < 1) {
+  reference_filter_year <- params$reference %>%
+    filter(timeUnit == "year",
+           dateInterval > age_lower,
+           dateInterval <= age_upper,
+           gender == params$sampleInfo$"性别")
+  reference_filter_month <- params$reference %>%
+    filter(
+      timeUnit == "month",
+      dateInterval > age_lower,
+      dateInterval <= age_upper,
+      gender == params$sampleInfo$"性别"
+    )
+  reference_filter <-
+    bind_rows(reference_filter_year, reference_filter_month)
+}
+
+detectData <- params$data %>%
+  pivot_longer(cols = everything(),
+               names_to = "compound",
+               values_to = "value")
+
+ch_compound_levels = c(
+  "免疫调节激素:",
+  "11-脱氧皮质醇",
+  "11-脱氧皮质酮",
+  "21-脱氧皮质醇",
+  "氢化可的松",
+  "皮质酮",
+  "可的松",
+  "醛固酮",
+  '雄性激素:',
+  "脱氢表雄酮",
+  "雄烯二酮",
+  "睾酮",
+  "雌性激素:",
+  "雌酮",
+  "雌二醇",
+  "孕激素:",
+  "孕酮",
+  "17-羟孕酮"
+)
+
+plot <- trans2show_dx1597_ggplot(
+  data = detectData %>%
+    left_join(reference_filter,by = "compound") %>%
+    filter(ch_compound %in% ch_compound_levels) %>%
+    select(compound,value),
+  reference = reference_filter,
+  barWidth = 0.4,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels
+)
+```
+
+
+```{r,echo=FALSE,fig.align='center',fig.height=12,fig.width=8}
+htmltools::div(ggplotly(plot) %>% style(hoverinfo = 'none'), align="center")
+```
+
+
+```{r include=FALSE}
+chrlist <- interpret_nutriMeta(
+  data = detectData,
+  reference = reference_filter,
+  interpret_text = params$interpretation,
+  product_label = "激素",
+  ch_compound_levels = ch_compound_levels
+)
+```
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 结果
+</h2>
+
+<p id = "individual">
+`r chrlist$results`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 分析
+</h2>
+
+<p id = "individual">
+`r paste("尊敬的",params$sampleInfo$"性别","士您好，感谢您选择华大基因人体类固醇激素检测。 ",sep = "")`
+</p>
+
+<p id = "individual">
+`r chrlist$interpretation`
+</p>
+
+<p id = "individual">
+如对检测报告有疑问，请咨询 段欣 13798282151。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 备注
+</h2>
+
+<p class = "paragraph">
+1.本检测使用的参考范围来源于Quest Diagnosis，是根据受检者的性别、年龄或女性生理周期来确定的。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责；
+</p>
+
+<p class = "paragraph">
+2.本检测仅用于上述检测结果中所列举的14种类固醇激素检测；
+</p>
+
+<p class = "paragraph">
+3.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”；
+</p>
+
+<p class = "paragraph">
+4.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	14种类固醇激素简介
+</h2>
+
+<h3>免疫调节激素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">11-脱氧皮质醇</td>
+<td class = "c2">由17-羟孕酮生成，是氢化可的松和可的松生物合成的前体，是胆固醇转化为皮质醇的中间产物。在甲吡酮试验中，测定该化合物比测定17-羟皮质类固醇或17-生酮类固醇更为直接，可靠性更大。</td>
+</tr>
+<tr>
+<td class = "c1">11-脱氧皮质酮</td>
+<td class = "c2">具有促进肾小管对钠离子的重吸收和排钾离子的作用，从而维持血清/血浆中钠、钾离子平衡。为肾上腺盐皮质激素，具有类似醛固酮的作用。</td>
+</tr>
+<tr>
+<td class = "c1">21-脱氧皮质醇</td>
+<td class = "c2">是糖皮质激素通路中的一种中间类固醇，由类固醇11-β-羟化酶（CYP11B1）代谢17α-羟孕酮生成。血清/血浆21-脱氧皮质醇（21DF）是诊断21-羟化酶缺乏症的重要生物标志物。</td>
+</tr>
+<tr>
+<td class = "c1">氢化可的松</td>
+<td class = "c2">由肾上腺束状带细胞分泌，是人体为抵御有害刺激而分泌的激素。具有促进蛋白质和脂肪分解，升高血糖，抑制免疫反应及某些炎症因子的产生，减轻全身炎症反应及组织损伤等作用。</td>
+</tr>
+<tr>
+<td class = "c1">皮质酮</td>
+<td class = "c2">从孕酮生物合成而得到的一种糖皮质素。存在于人类肾上腺皮质分泌物中。多种哺乳动物分泌皮质酮和皮质醇两者的混合物。</td>
+</tr>
+<tr>
+<td class = "c1">可的松</td>
+<td class = "c2">可的松是肾上腺皮质分泌的激素，本身无活性，需要在体内代谢成氢化可的松才起作用。在肾上腺皮质功能减退、垂体功能减退、过敏性和炎症性等疾病中发挥作用。</td>
+</tr>
+<tr>
+<td class = "c1">醛固酮</td>
+<td class = "c2">由肾上腺皮质球状带细胞合成和分泌，是人体调节血容量的激素。主要作用于肾脏远曲小管和肾皮质集合管，增加对钠离子的重吸收和促进钾离子的排泄，也作用于髓质集合管，促进氢离子的排泄，酸化尿液。</td>
+</tr>
+</table>
+
+<h3>雄性激素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">脱氢表雄酮</td>
+<td class = "c2">是肾上腺皮质中的主要雄性激素，是睾酮生物合成过程的中间产物。可在尿中分离得到。与雄烯二酮、睾酮、二氢睾酮一起，代表了人体的雄性激素水平。具有促进肌肉增长，增加骨质密度及强度，促进骨髓造血，增加皮肤及头发油性，维持性欲，提升体能及减少心血管疾病的发病风险等作用。</td>
+</tr>
+<tr>
+<td class = "c1">雄烯二酮</td>
+<td class = "c2">是孕酮经雄酮生物合成睾酮的中间物。其生物活性较睾酮弱。与脱氢表雄酮、睾酮、二氢睾酮一起，代表了人体的雄性激素水平。具有促进肌肉增长，增加骨质密度及强度，促进骨髓造血，增加皮肤及头发油性，维持性欲，提升体能及减少心血管疾病的发病风险等作用。</td>
+</tr>
+<tr>
+<td class = "c1">睾酮</td>
+<td class = "c2">由男性的睾丸或女性的卵巢分泌，肾上腺亦分泌少量睾酮。它是主要的雄性激素。不论是男性或女性，它对健康都有着重要的影响，包括增强性欲、力量、免疫功能、促进肌肉增长，增加骨质密度及强度，促进骨髓造血等作用。据统计，成年男性分泌睾酮的量是成年女性分泌的20倍。睾酮可生成二氢睾酮，在芳香化酶的作用下还可生成雌二醇。女性体内也有少量睾酮，如量太高会有男性化趋势。</td>
+</tr>
+</table>
+
+<h3>雌性激素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">雌酮</td>
+<td class = "c2">由卵巢分泌的一种主要的雌性激素，是雌二醇的氧化产物。其生物学作用弱于雌二醇，而强于雌三醇。与雌二醇一起负责调节女性特征、附属性器官的成熟和月经-排卵周期，促进乳腺导管系统的产生。同时，过量的雌酮也被认为是一种女性致癌物质，而在男性中也可引起厌食、勃起功能紊乱等不良现象。</td>
+</tr>
+<tr>
+<td class = "c1">雌二醇</td>
+<td class = "c2">在女性体内由卵巢分泌的类固醇激素。是主要的雌性激素，由睾酮经芳香化酶转化而成，负责调节女性特征、附属性器官的成熟和月经-排卵周期，促进乳腺导管系统的产生。临床用于卵巢功能不全或卵巢激素不足引起的各种症状。男性体内也有少量的雌二醇等雌性激素，如量太高会有女性化趋势。</td>
+</tr>
+</table>
+
+<h3>孕激素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">孕酮</td>
+<td class = "c2">孕酮又称黄体酮，是由卵巢黄体分泌的一种激素，由孕烯醇酮转化而来，并可经一系列生化反应生成醛固酮和氢化可的松。它在体内与雌性激素联合作用，调节女性生理健康。为维持妊娠所必需。临床用于抑制宫缩，调节女性生理周期等。</td>
+</tr>
+<tr>
+<td class = "c1">17-羟孕酮</td>
+<td class = "c2">21-羟化酶缺乏的先天性肾上腺皮质增生患者血17-羟孕酮浓度明显升高，11-羟化酶缺乏时17-羟孕酮上升幅度较小。约6%的成年多毛女性有不同程度的21-羟化酶缺乏。也可用于分析男性和女性的普通痤疮、男性脱发及一些不明原因的不育症。</td>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>

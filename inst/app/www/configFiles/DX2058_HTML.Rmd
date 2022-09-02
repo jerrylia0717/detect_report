@@ -1,0 +1,225 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+title: 多种神经酰胺检测报告
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(plotly)
+```
+<head>
+<style>
+html {
+font-weight:normal;
+}
+h1 {
+text-align:center;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bold;
+}
+h1.title {
+text-align:center;
+font-size:1.9em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.5em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.4em;
+}
+table tr:first-child {
+font-weight: bolder;
+}
+td.item {
+font-weight: bolder;
+}
+td {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+</style>
+</head>
+
+<html>
+<body>
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE}
+textResults <-
+  interprete_DX2058(data = params$data,
+                    reference = params$reference)
+
+plot <- trans2show_ceram_ggplot(textResults$finalScore)
+```
+
+```{r,echo=FALSE,fig.align='center',fig.height=12,fig.width=8}
+htmltools::div(ggplotly(plot) %>% style(hoverinfo = 'none'), align="center")
+```
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 分析
+</h2>
+
+<p id = "individual">
+`r textResults$interpretation`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责。
+</p>
+
+<p class = "paragraph">
+2.本检测仅用于上述检测结果中所列举的神经酰胺检测。
+</p>
+
+<p class = "paragraph">
+3.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。
+</p>
+
+<p class = "paragraph">
+4.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`神经酰胺（Cer）指标检测意义
+</h2>
+
+<p class = "paragraph">
+神经酰胺是复杂的脂质，在细胞膜完整性、细胞应激反应、炎症信号传导和细胞凋亡中起着核心作用。由饱和脂肪和鞘氨醇合成神经酰胺的代谢过程发生在所有的组织中，当代谢功能障碍和血脂异常时，将会导致神经酰胺在不适合脂质储存的组织中积累，从而浓度升高。神经酰胺浓度升高与动脉粥样硬化斑块形成、缺血性心脏病、心肌梗塞、高血压、中风、2 型糖尿病、胰岛素抵抗和肥胖有关。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	神经酰胺与心脑血管疾病
+</h2>
+
+<p class = "paragraph">
+神经酰胺是不稳定动脉粥样硬化斑块引起不良心血管事件的预测因子，可预测 1-5 年内心肌梗塞、冠状动脉血运重建、急性冠状动脉综合征住院和死亡率的风险。 三种特定的神经酰胺已被确定与心血管疾病和胰岛素抵抗高度相关：Cer16:0、Cer18:0 和 Cer24:1。神经酰胺带来的风险与性别、年龄、吸烟状况以及传统血清标志物（低密度脂蛋白（LDL）胆固醇、C 反应蛋白、LDL 颗粒和脂蛋白相关磷脂酶 A2）无关。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`神经酰胺高风险的改善措施
+</h2>
+
+<p class = "paragraph">
+神经酰胺可通过饮食、运动、辛伐他汀、瑞舒伐他汀和前蛋白转化酶枯草杆菌蛋白酶/kexin 9 型（PCSK9）抑制剂来降低。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`神经酰胺风险评分系统
+</h2>
+
+<table style="width:100%" border = "1" id = "tabs">
+<tr>
+<td>评分项</td>
+<td>Q1</td>
+<td>Q2</td>
+<td>Q3</td>
+<td>Q4</td>
+</tr>
+<tr>
+<td>CER(16:0)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>CER(18:0)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>CER(24:1)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>CER(16:0)/CER(24:0)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>CER(18:0)/CER(24:0)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>CER(24:1)/CER(24:0)</td>
+<td>0</td>
+<td>0</td>
+<td>+1</td>
+<td>+2</td>
+</tr>
+</table>
+
+<p class = "paragraph">
+Q1:第1 四分位数; Q2: 第2 四分位数; Q3: 第3 四分位数; Q4: 第4 四分位数。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`神经酰胺风险评分与心血管疾病危险分级
+</h2>
+
+<table style="width:100%" border = "1" id = "tabs">
+<tr>
+<td>得分</td>
+<td>危险分级</td>
+</tr>
+<tr>
+<td>0-2</td>
+<td>低风险</td>
+</tr>
+<tr>
+<td>3-6</td>
+<td>中风险</td>
+</tr>
+<tr>
+<td>7-9</td>
+<td>中高风险</td>
+</tr>
+<tr>
+<td>10-12</td>
+<td>高风险</td>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>

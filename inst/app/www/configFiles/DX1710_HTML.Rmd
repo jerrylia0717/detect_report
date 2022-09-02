@@ -1,0 +1,298 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  sampleInfo: sampleInfo
+  reference: reference
+  interpretation: interpretation
+title: 人体微量元素与重金属检测（全血）报告
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(plotly)
+```
+<head>
+<style>
+html {
+font-weight:normal;
+}
+h1.title {
+text-align:center;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:1.4em;
+font-family:"Times New Roman", Times, serif;
+}
+h3 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight: bolder;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.4em;
+}
+<!-- table tr:first-child { -->
+<!-- font-weight: bolder; -->
+<!-- } -->
+td.item {
+font-weight: bolder;
+}
+td.c1 {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+td.c2 {
+height:50px;
+text-align:left;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+text-indent:38px;
+}
+</style>
+</head>
+
+
+<html>
+<body>
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE}
+if (params$sampleInfo$"性别" == "男") {
+  reference_filter <- params$reference %>%
+    filter(gender != 1) %>% 
+    filter(params$sampleInfo$"年龄" >= age_lower,params$sampleInfo$"年龄" <= age_upper)
+} else if (params$sampleInfo$"性别" == "女") {
+  reference_filter <- params$reference %>%
+    filter(gender != 0) %>% 
+    filter(params$sampleInfo$"年龄" >= age_lower,params$sampleInfo$"年龄" <= age_upper)
+}
+
+ch_compound_levels1 = c("锌",
+                        "锰",
+                        "镁",
+                        "铜",
+                        "铁",
+                        "硒",
+                        "铬",
+                        "钴",
+                        '锶',
+                        "碘",
+                        "钙")
+ch_compound_levels2 = c("铅",
+                        "汞",
+                        "镉",
+                        "砷",
+                        "铊",
+                        "钒",
+                        "镓")
+detectData <- params$data %>%
+  pivot_longer(cols = everything(),names_to = "compound",values_to = "value")
+
+plot1 <- trans2show_nutrition_ggplot(
+  data = detectData %>% filter(compound %in% c("Zn","Mn","Mg","Cu","Fe","Se","Cr","Co","Sr","I","Ca")),
+  reference = reference_filter,
+  barWidth = 0.25,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels1
+)
+plot2 <- trans2show_nutrition_ggplot(
+  data = detectData %>% filter(compound %in% c("Pb","Hg","Cd","As","Tl","V","Ga")),
+  reference = reference_filter,
+  barWidth = 0.2,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels2
+)
+```
+
+<h3>
+微量元素
+</h3>
+
+```{r,echo=FALSE}
+htmltools::div(ggplotly(plot1) %>% style(hoverinfo = 'none'), align="center")
+```
+
+<h3>
+重金属元素
+</h3>
+
+```{r,echo=FALSE}
+htmltools::div(ggplotly(plot2) %>% style(hoverinfo = 'none'), align="center")
+```
+
+```{r include=FALSE}
+chrlist <- interpret_nutriMeta(
+  data = detectData,
+  reference = reference_filter,
+  interpret_text = params$interpretation,
+  product_label = "元素",
+  ch_compound_levels = ch_compound_levels1
+)
+```
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 结果
+</h2>
+
+<p id = "individual">
+`r chrlist[["results"]]`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 分析
+</h2>
+
+<p id = "individual">
+`r paste("尊敬的",params$sampleInfo$"性别","士您好，感谢您选择华大基因人体微量元素与重金属检测（全血）检测。 ",sep = "")`
+</p>
+
+<p id = "individual">
+`r chrlist$interpretation`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 备注
+</h2>
+
+<p class = "paragraph">
+本检测报告的参考范围来源于Doctor's Data。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责；
+</p>
+
+<p class = "paragraph">
+2.本检测仅用于上述检测结果中所列的18种元素检测；
+</p>
+
+<p class = "paragraph">
+3.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”；
+</p>
+
+<p class = "paragraph">
+4.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	18种微量元素及重金属元素简介
+</h2>
+
+<h3>微量元素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">锌</td>
+<td class = "c2">锌（Zn）是人体内约200种酶的组分或激活剂，参与营养物质代谢，调节体内酸碱平衡，维持正常的味觉、嗅觉、听觉和视觉功能，促进皮肤伤口愈合、增强免疫功能，还可以促进性器官正常发育保持正常的性功能。</td>
+</tr>
+<tr>
+<td class = "c1">锰</td>
+<td class = "c2">锰（Mn）是体内糖、脂类及蛋白质代谢所需生物酶的组分或激活剂，参与骨骼生长发育、造血过程和性激素的合成，维持正常的生殖功能 。锰是超氧化物歧化酶（SOD）的成分，能减轻自由基的氧化损伤，起抗氧化、防衰老的作用。</td>
+</tr>
+<tr>
+<td class = "c1">镁</td>
+<td class = "c2">镁（Mg）是当之无愧的“生命活动激活剂”，能激活体内325个酶系统，任何需要ATP参与的反应都需要镁离子。镁具有多种特殊的生理功能，如缓解肌肉痉挛和疼痛、强化骨骼、舒张血管、降低血压、改善便秘、预防结石形成和提高男士的生育能力等。</td>
+</tr>
+<tr>
+<td class = "c1">铜</td>
+<td class = "c2">铜（Cu）是人体必需的微量元素之一，是体内多种酶及生物活性蛋白的重要组分，对铁的吸收利用和造血过程具有重要的促进作用，可以调节中枢神经系统的功能、免疫功能和内分泌功能，维持心血管的韧性和弹性。</td>
+</tr>
+<tr>
+<td class = "c1">铁</td>
+<td class = "c2">一般成人体内含铁（Fe）约3-5g，相当于一枚小铁钉的重量，是人体血液中血红蛋白的重要元素具有运输氧和二氧化碳并维持血液酸碱平衡的作用。铁还能激活体内多种生物酶，参与体内能量代谢，对人体免疫功能及神经系统功能具有重要的调节作用。</td>
+</tr>
+<tr>
+<td class = "c1">硒</td>
+<td class = "c2">硒（Se）具有人体微量元素中“抗癌之王”的美誉，可与重金属螯合起解毒作用，其抗氧化作用是维生素E的数十倍，在保护心血管、维持心肌健康、防止关节炎、保护视力、提高免疫力方面的作用不容小觑。缺硒地区的人群易得克山病、大骨节病，肿瘤发病率也明显较高。</td>
+</tr>
+<tr>
+<td class = "c1">铬</td>
+<td class = "c2">人体内铬（Cr）总量约为7毫克，主要分布于骨骼、皮肤、肾上腺、大脑和肌肉之中。与人体健康密切相关的铬有三价铬和六价铬之分，前者有益健康，后者则有损健康。三价铬是糖尿病的“克星”，能辅助胰岛素利用葡萄糖；增加体内胆固醇的分解和排泄，有助于预防及改善动脉硬化、预防高血压等心血管疾病。三价铬可在一定的情况下被氧化后产生的六价铬，六价铬具有致癌和致突变作用。</td>
+</tr>
+<tr>
+<td class = "c1">钴</td>
+<td class = "c2">钴（Co）是维生素B12的重要组成部分，主要依赖于维生素B12发挥生理作用。钴的缺乏会直接影响到维生素B12生理功能的发挥，易发生贫血症、老年痴呆症、性功能障碍，易患上脊髓炎、青光眼以及心血管疾病。另外，白血病、白内障和一些口腔疾病的发生也与体内缺乏钴有一定的关系。</td>
+</tr>
+<tr>
+<td class = "c1">锶</td>
+<td class = "c2">锶（Sr）主要聚集在骨化旺盛的地方，具有促进骨骼钙化、抗牙齿过敏和抗龋作用、预防老年性骨质疏松症和心血管疾病，在抑制结石形成 、疼痛治疗等方面发挥着重要作用。</td>
+</tr>
+<tr>
+<td class = "c1">碘</td>
+<td class = "c2">碘（I）是人体必需的微量元素，生理功能别无替代，在人体内被用以制造甲状腺素，从而调控细胞代谢、神经性肌肉组织发展与成长。碘缺乏症是造成可避免性脑损害疾病最常见的因素，甲状腺炎、甲状腺肿等症状常提示人体内碘含量异常。</td>
+</tr>
+<tr>
+<td class = "c1">钙</td>
+<td class = "c2">钙离子影响心脏和骨骼肌的收缩力，对神经系统的功能至关重要。此外，钙离子在凝血和骨矿化中起着重要作用。低钙血症是由于甲状旁腺功能缺失或受损或维生素D合成受损所致。由于维生素D合成减少、高磷血症和骨骼对甲状旁腺激素（PTH）的抵抗，慢性肾功能衰竭也常与低钙血症有关。低钙血症的特征性症状是潜伏性或明显的手足抽搐和骨软化。高钙血症是由骨骼系统钙的动员增加或肠道吸收增加引起的。大多数病例是由于原发性甲状旁腺功能亢进（pHPT）或乳腺癌、前列腺癌、甲状腺癌或肺癌的骨转移。患有原发性甲状旁腺炎和骨病、肾结石或肾钙质沉着症或其他症状或体征的患者是甲状旁腺切除术的候选者。严重高钙血症可导致心律失常。钙水平也可能反映出维生素D或蛋白质水平的异常。</td>
+</tr>
+</table>
+
+<h3>重金属元素</h3>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">铅</td>
+<td class = "c2">铅（Pb）是一种具有神经毒性的重金属元素，对中枢和周围神经系统有明显的损害作用，环境污染、装修及室内装饰材料、化妆品及食品污染都是导致慢性铅中毒的主要原因。与成人相比，儿童对铅毒性的敏感性更高， 可造成智力损伤、生长发育迟缓。</td>
+</tr>
+<tr>
+<td class = "c1">汞</td>
+<td class = "c2">汞（Hg）俗称水银，是常温、常压条件下唯一呈液态的金属。元素汞具有挥发性，汞蒸气吸入肺部后，可能对神经、消化和免疫系统，以及肺、肾、皮肤和眼睛都产生毒副作用。除食用受污染的鱼和贝类引入甲基汞外， 生活中所用的电池、温度计、牙科用汞合金、皮肤美白产品也是汞的常见来源。</td>
+</tr>
+<tr>
+<td class = "c1">镉</td>
+<td class = "c2">世界卫生组织(WHO)将镉（Cd）列为重点研究的食品污染物，大米是非职业人群膳食镉暴露的最主要来源。镉的生物半衰期为10~30年，且生物富集作用显著，即使停止接触，大部分既往蓄积的镉仍会继续停留在人体内。肾脏是镉最重要的蓄积部位和靶器官，严重的可导致肾衰竭 ；影响骨骼的矿化过程，导致骨软化和骨质疏松，“痛痛病”是镉中毒的典型病症。</td>
+</tr>
+<tr>
+<td class = "c1">砷</td>
+<td class = "c2">砷（As）是国际癌症研究机构（IARC）确认的人类致癌物之一，对健康的危害是多方面的，主要累及皮肤、神经系统和心肺功能，对机体免疫功能产生抑制作用。砷化物可通过皮肤、呼吸道、消化道进入人体，长期暴露可引发皮肤、肝脏和肺等的肿瘤。</td>
+</tr>
+<tr>
+<td class = "c1">铊</td>
+<td class = "c2">铊（Tl）为强烈的神经毒物，铊及其化合物的毒性比氧化砷的毒性高得多，对肝、肾有损害作用，其特有的慢性中毒症状为毛发脱落。铊可在体内积蓄数年，主要通过饮水、食物从消化道进入人体被吸收，吸入含铊粉尘或蒸汽状化合物或经皮肤接触均可造成中毒。</td>
+</tr>
+<tr>
+<td class = "c1">钒</td>
+<td class = "c2">钒通过胃肠道的吸收很少，钒的可溶化合物在吸入后被大量吸收并集中在肺中，吸收的钒在体内广泛分布。钒对特定的细菌和微生物是必须的，一些报道认为钒对哺乳动物是必须的，但是生化功能在人体中还未被明确。钒主要用于对普通人群和职业暴露者的生物监测，职业暴露者经常发现钒的含量超标。暴露于空气中钒化合物的工人的急性局部影响，包括呼吸道和眼睛的刺激，偶尔出现舌和皮肤的变色。高的钒暴露可能引起支气管肺炎，哮喘，出现咳痰、喉咙痛、劳累呼吸困难、胸痛等问题。或不适、头痛、流鼻涕或打喷嚏、眼睛刺激和喘息。</td>
+</tr>
+<tr>
+<td class = "c1">镓</td>
+<td class = "c2">镓为硼族（ⅢA 族）稀散元素，广泛存在于铁、铝、铜、锌等矿石中，应用 在日常生活中的各个领域（如半导体、合金、药品、温度计、杀虫剂和杀鼠剂等），镓及其化合物属低毒或微毒类，有蓄积性，其均 可经呼吸道、消化道和皮肤吸收进入人体，从而对健康造成危害。</td>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>

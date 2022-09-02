@@ -1,0 +1,228 @@
+---
+documentclass: ctexart
+header-includes:
+  # 调用ctex包，默认设置中文字体，默认字体为宋体，加粗为黑体，斜体为楷体
+- \usepackage{ctex}
+# 设置灰色阴影
+- \usepackage{xcolor}
+- \usepackage{framed}
+# 设置行距
+- \usepackage{setspace}
+# 设置页面大小，设置页边距
+- \usepackage{geometry}
+- \usepackage{graphicx}
+- \geometry{a4paper,left=2cm,right=2cm,top=1.5cm,bottom=2.5cm}
+# 页眉
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \pagenumbering{arabic}
+- \usepackage{tabu}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+- \usepackage{multirow}
+- \usepackage{array}
+- \usepackage{lastpage}
+- \usepackage{makecell}
+- \rfoot{\thepage}
+- \cfoot{}
+- \setlength\headheight{30pt}
+# - \setCJKmainfont{SimSun}
+- \usepackage{amsmath}
+- \usepackage{unicode-math}
+- \usepackage{babel}
+- \defaultfontfeatures{ Scale=MatchLowercase, Ligatures = TeX }
+- \setmainfont{Times New Roman}
+- \setmathfont{latinmodern-math.otf}
+- \setmathfont[range=it]{Times New Roman}
+
+
+output:
+  rticles::ctex:
+    keep_tex: true
+    fig_caption: no
+    number_sections: no
+    toc: no
+
+params:
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
+rmarkdown::find_pandoc(version = "2.19.2")
+library(dplyr)
+library(kableExtra)
+library(xfun)
+library(showtext)
+library(lubridate)
+showtext::showtext.auto()
+```
+
+
+\fancyhead[L]{\includegraphics[height=30pt, trim=0 0 0 0]{headerLeft.png}}
+\fancyhead[C]{\textcolor[RGB]{0,91,172}{\zihao{3}\textbf{深圳华大医学检验实验室}}}
+\fancyhead[R]{\textcolor{gray}{\zihao{6}\textbf{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()` \\受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`\\样本编号：`r params$sampleId`\\DX-MS-B28 V1.3\\}}}
+
+\fancyfoot[L]{\zihao{6}地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）客服电话：400-605-6655 网址：www.bgidx.cn}
+\fancyfoot[R]{\zihao{6}\thepage\ / \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.25pt}
+\renewcommand{\footrulewidth}{0.25pt}
+<!-- 设置行距 -->
+  <!-- 居中显示 -->
+  <!-- 设置字号：小三 -->
+  <!-- 粗体显示 -->
+  <!-- 根据institute变量显示标题 -->
+
+\colorlet{shadecolor}{gray!50}
+\singlespacing
+\begin{center}
+\zihao{3}
+\textbf{\\}
+\textbf{多种神经酰胺检测报告}
+\textbf{\\}
+\textbf{\\}
+\end{center}
+<!-- 加阴影 -->
+  <!-- 设置字号：五号 -->
+
+\begin{shaded}
+\zihao{4}
+\textbf{样本信息}
+\end{shaded}
+\zihao{5}
+
+
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\mbox{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()`}& \mbox{采血日期：`r params$sampleInfo %>% select("采样日期") %>% pull() %>% ymd()`} & \mbox{样本编号：`r params$sampleId`} \\ \mbox{受检者性别：`r params$sampleInfo %>% select("性别") %>% pull()`} & \mbox{接收日期：`r params$sampleInfo %>% select("入库时间") %>% pull()`} & \mbox{样本类型：全血} \\ 
+\mbox{受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`} & \mbox{检测日期：`r Sys.Date()`} & \mbox{送检科室：} \\
+\mbox{联系电话：`r params$sampleInfo %>% select("联系电话") %>% pull()`} & \mbox{ } & \mbox{检测方法：液相色谱串联质谱法} \\
+\mbox{送检单位：`r params$sampleInfo %>% select("送检单位") %>% pull()`} & \mbox{ } & \mbox{}\\
+\end{tabu}
+
+\begin{shaded}
+\zihao{4}
+\textbf{检测结果}
+\end{shaded}
+
+```{r fig.showtext = TRUE, warning = FALSE, out.width = "100%", message=FALSE}
+textResults <-
+  interprete_DX2058(data = params$data,
+                    reference = params$reference)
+
+tempResult <- tibble(
+  `检测指标` = c("$CER(16:0)$","$CER(18:0)$","$CER(24:0)$","$CER(24:1)$","$CER(16:0)/CER(24:0)$","$CER (18:0)/CER(24:0)$","$CER(24:1)/CER(24:0)$"),
+  `compound` = c("CER(16：0)","CER(18：0)","CER(24：0)","CER(24：1)","CER(16：0)/CER(24：0)","CER(18：0)/CER(24：0)","CER(24：1)/CER(24：0)"),
+  `单位` = c("$\\mu mol/L$","$\\mu mol/L$","$\\mu mol/L$","$\\mu mol/L$","$-$","$-$","$-$"),
+  `总得分` = textResults$finalScore,
+  `风险评估等级` = textResults$risk) %>% 
+  left_join(textResults$marked,by = "compound") %>% 
+  select(`检测指标`,`检测结果` = mark,`单位`,`总得分`,`风险评估等级`)
+
+kbl(tempResult, booktabs = T,align = "c",format = "latex",escape = FALSE) %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T, font_size = 11.0) %>%
+  # row_spec(0, bold = T) %>%
+  column_spec(1,width = "4.5cm") %>%
+  collapse_rows(columns = 4:5, latex_hline = "major", valign = "middle")
+```
+
+
+\begin{shaded}
+\zihao{4}
+\textbf{分析}
+\end{shaded}
+
+\zihao{5}
+|         `r textResults$interpretation`
+
+\begin{shaded}
+\zihao{4}
+\textbf{声明}
+\end{shaded}
+
+\zihao{5}
+
+1、本检测结果只对本次送检样本负责。  
+2、本检测仅用于上述检测结果中所列举的神经酰胺检测。  
+3、该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。  
+4、检测结果的解释及疾病诊断，请咨询相关医院专科医生。  
+
+
+\color{white}`r paste(rep("\\textbf{\\\\}", 14-floor(nchar(textResults$interpretation)/46)), sep = "")`
+
+
+ \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$
+ \hspace{3cm} \normalsize\color{black} 检测人：\tiny\color{white}\$result_seal_user_flag_A\$\hspace{2.5cm}\normalsize\color{black} 审核人：\tiny\color{white}\$result_seal_user_flag_B\$\hspace{2.5cm}\normalsize\color{black} 报告日期：`r Sys.Date()`
+
+ <!-- \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$ -->
+ <!-- \hspace{5cm} \normalsize\color{black} 检测人：张静钰\hspace{4cm}\normalsize\color{black} 审核人：廖云莉\hspace{4cm}\normalsize\color{black} 报告日期：`r Sys.Date()` -->
+ 
+\newpage
+
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{神经酰胺（Cer）指标检测意义}
+\end{itemize}
+
+\zihao{5}
+|         神经酰胺是复杂的脂质，在细胞膜完整性、细胞应激反应、炎症信号传导和细胞凋亡中起着核心作用。由饱和脂肪和鞘氨醇合成神经酰胺的代谢过程发生在所有的组织中，当代谢功能障碍和血脂异常时，将会导致神经酰胺在不适合脂质储存的组织中积累，从而浓度升高。神经酰胺浓度升高与动脉粥样硬化斑块形成、缺血性心脏病、心肌梗塞、高血压、中风、2 型糖尿病、胰岛素抵抗和肥胖有关。  
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{神经酰胺与心脑血管疾病}
+\end{itemize}
+
+\zihao{5}
+|         神经酰胺是不稳定动脉粥样硬化斑块引起不良心血管事件的预测因子，可预测 1-5 年内心肌梗塞、冠状动脉血运重建、急性冠状动脉综合征住院和死亡率的风险。 三种特定的神经酰胺已被确定与心血管疾病和胰岛素抵抗高度相关：Cer16:0、Cer18:0 和 Cer24:1。神经酰胺带来的风险与性别、年龄、吸烟状况以及传统血清标志物（低密度脂蛋白（LDL）胆固醇、C 反应蛋白、LDL 颗粒和脂蛋白相关磷脂酶 A2）无关。  
+
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{神经酰胺高风险的改善措施}
+\end{itemize}
+
+\zihao{5}
+|         神经酰胺可通过饮食、运动、辛伐他汀、瑞舒伐他汀和前蛋白转化酶枯草杆菌蛋白酶/kexin 9 型（PCSK9）抑制剂来降低。
+
+
+\begin{center}
+\zihao{4}
+\textbf{神经酰胺风险评分系统}
+\end{center}
+```{r fig.showtext = TRUE, warning = FALSE, out.width = "100%", message=FALSE}
+tempResult <- tibble(
+  `评分项` = c("$CER(16:0)$","$CER(18:0)$","$CER(24:0)$","$CER(24:1)$","$CER(16:0)/CER(24:0)$",
+            "$CER(18:0)/CER(24:0)$","$CER(24:1)/CER(24:0)$"),
+  Q1 = 0,
+  Q2 = 0,
+  Q3 = "+1",
+  Q4 = "+2")
+
+kbl(tempResult,align = "c",escape = FALSE,booktabs = T,format = "latex",linesep = "") %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T, font_size = 11.0) %>%
+  # row_spec(0, bold = T) %>%
+  column_spec(1,width = "4.5cm") 
+  # column_spec(c(1,2,3,4,5),width = "2.8cm")
+```
+\zihao{6}
+\textbf{Q1:第1 四分位数; Q2: 第2 四分位数; Q3: 第3 四分位数; Q4: 第4 四分位数}
+
+
+\begin{center}
+\zihao{4}
+\textbf{神经酰胺风险评分与心血管疾病危险分级}
+\end{center}
+```{r fig.showtext = TRUE, warning = FALSE, out.width = "100%", message=FALSE}
+tempResult <- tibble(
+  `得分` = c("$0-2$","$3-6$","$7-9$","$10-12$"),
+  `危险等级` = c("低风险","中风险","中高风险","高风险"))
+
+kbl(tempResult,align = "c",escape = FALSE,
+    format = "latex",linesep = "") %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T, font_size = 11.0) %>%
+  row_spec(0, bold = T) %>%
+  column_spec(c(1,2),width = "7cm")
+```

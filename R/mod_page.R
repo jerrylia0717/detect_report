@@ -215,6 +215,7 @@ mod_page_server <- function(id) {
     # read sample info into r
     sampleInfo <- reactive({
       req(input$sampleinfo)
+      req(detectData)
       product_code <-
         str_split(basename(inputRmdFile()), '_')[[1]][1]
       if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
@@ -230,10 +231,27 @@ mod_page_server <- function(id) {
                  `年龄`) %>%
           mutate(`入库时间` = map_chr(.x = `入库时间`, .f = ~ as.character(ymd(.x))))
       } else if (product_code %in% c("DX1597", "DX1683", "DX1710", "DX1736")) {
-        read_xlsx(inputSampleInfoFile()) %>%
-          select(`Sample Name` = `绑定的样本编码`,
-                 `性别`,
-                 `年龄`)
+          read_xlsx(inputSampleInfoFile()) %>%
+          # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
+          select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`, `采样时间`, `出生日期`, `年龄`) %>%
+          filter(`Sample Name` %in% detectData()$`Sample Name`) %>%
+          mutate(`Sample Name` = toupper(`Sample Name`)) %>%
+          mutate(`年龄` = pmap_dbl(
+            .l = list(
+              ..1 = `年龄`,
+              ..2 = `出生日期`,
+              ..3 = `采样时间`,
+              ..4 = `证件号`
+            ),
+            .f = ~ case_when(
+              !is.na(..1) ~ as.numeric(..1),
+              all(!is.na(..2),!is.na(..3)) ~ interval(ymd(..2), ymd(str_split(..3," ")[[1]][1])) / years(1),
+              all(!is.na(..4),!is.na(..3)) ~ interval(ymd(substring(
+                as.character(..4), 7, 14
+              )), ymd(str_split(..3," ")[[1]][1])) / years(1)
+            )
+          )) %>%
+          mutate(across(.cols = `年龄`, .fns = round, 0))
       }
     })
     # display sample info using DT

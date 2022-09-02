@@ -38,7 +38,7 @@ renderFlow <- function(rmdFile,
     reference <- read_xlsx(ref_file)
   }
 
-  # showNotification("running...", type = "message")
+  showNotification("running...", type = "message")
   if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
 
     pwalk(
@@ -116,10 +116,6 @@ renderFlow <- function(rmdFile,
     report_format == "PDF" ~ str_c(sampleId,"_",product_code, "_正式报告_中文_其他.pdf", sep = ""),
     report_format == "HTML" ~ str_c(product_code,"_",sampleId,".html",sep = "")
   )
-
-  showNotification("running...", type = "message")
-  str(unlist(sampleInfo))
-  str(data)
 
   render(
     rmdFile,

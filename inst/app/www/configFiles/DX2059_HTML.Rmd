@@ -1,0 +1,265 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+title: 氧化三甲胺代谢通路检测报告
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(plotly)
+```
+<head>
+<style>
+html {
+font-weight:normal;
+}
+h1.title {
+text-align:center;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:1.4em;
+font-family:"Times New Roman", Times, serif;
+}
+h3 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight: bolder;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.4em;
+}
+table tr:first-child {
+font-weight: bolder;
+}
+td.item {
+font-weight: bolder;
+}
+td {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+th {
+height:50px;
+text-align:left;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight:normal;
+text-indent:38px;
+}
+</style>
+</head>
+
+
+<html>
+<body>
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE}
+detectData <- params$data %>% 
+  pivot_longer(cols = everything(),names_to = "compound",values_to = "value")
+
+ch_compound_levels = c(
+  "氧化三甲胺",
+  "胆碱",
+  "甜菜碱",
+  "左旋肉碱"
+)
+
+plot <- trans2show_cardio_ggplot(
+  data = detectData %>%
+    left_join(params$reference,by = "compound") %>%
+    filter(ch_compound %in% ch_compound_levels) %>%
+    select(compound,value),
+  reference = params$reference,
+  barWidth = 0.4,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels
+)
+
+markInterpreted <- interprete_DX2059(data = params$data,
+                                     reference = params$reference)
+```
+
+```{r,echo=FALSE,fig.align='center',fig.height=12,fig.width=8}
+htmltools::div(ggplotly(plot) %>% style(hoverinfo = 'none'), align="center")
+```
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 分析
+</h2>
+
+
+<p id = "individual">
+`r markInterpreted$interpretation`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责。
+</p>
+
+<p class = "paragraph">
+2.本检测仅用于上述检测结果中所列举的指标检测。
+</p>
+
+<p class = "paragraph">
+3.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。
+</p>
+
+<p class = "paragraph">
+4.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	氧化三甲胺（TMAO）指标检测意义
+</h2>
+
+<p class = "paragraph">
+氧化三甲胺是一种肠源性菌群代谢物，已成为心血管疾病和其他慢性疾病的潜在风险因子。氧化三甲胺由饮食中的胆碱、甜菜碱及左旋肉碱经肠道微生物代谢产生三甲胺（TMA），再通过肝脏中的黄素单加氧酶3氧化而成，主要通过肾脏排泄。高水平的氧化三甲胺会增加心脑血管疾病的发病风险，因此可作为心脑血管疾病的预警信号；对于已有心血管疾病的患者，该指标也可以在一定程度上反应病情的严重程度。氧化三甲胺水平过高提示受检者需尽快调整饮食结构或调节肠道菌群，有助于受检者心血管疾病的预防或改善。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	氧化三甲胺（TMAO）水平过高的危害
+</h2>
+
+<h3>
+高氧化三甲胺与心血管疾病
+</h3>
+
+<p class = "paragraph">
+目前，心血管疾病已经成为威胁人类健康的主要疾病之一。《中国心血管病报告2018》报道我国心血管疾病患病人数达到2.9亿人，其患病率及死亡率仍处于持续上升阶段，尤其是冠状动脉粥样硬化性心脏病(冠心病)病人，尽管目前已有规范化的治疗，但是在长期治疗过程中，容易发生主要不良心血管事件，预后状况差，是导致病人死亡的主要原因。近年研究发现，肠道微生物产生的代谢产物参与了高血压、糖尿病、冠心病的发生和发展过程， 氧化三甲胺作为肠道微生物代谢产物之一，其浓度升高可导致动脉硬化、血小板高反应性、炎症反应以及相关代谢综合征，与冠心病尤其是急性冠脉综合征（ACS）的发生有关。
+</p>
+
+<h3>
+高氧化三甲胺与脑卒中
+</h3>
+
+<p class = "paragraph">
+脑卒中又称“中风”、“脑血管意外”是一种急性脑血管疾病，包括缺血性和出血性卒中，其中急性缺血性脑卒中（AIS）发病率较高，占脑卒中患者总数的70%～80%。AIS主要由于脑组织血液供应中断导致的脑组织坏死导致，具有发病率高、致残率高及致死率高等特点。2016年全球疾病负担（GBD）研究数据显示，中国是全世界终生脑卒中风险最高的国家，为39.3%，其中男性脑卒中风险为41.1%，女性脑卒中风险为36.7%。相关研究显示，AIS是我国最主要的致死病因，特别是在东北和华中地区。氧化三甲胺作为动脉粥样硬化的生物标志物，可预测AIS的发生风险，并辅助评估AIS患者治疗效果及预后。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	氧化三甲胺高风险的改善措施
+</h2>
+
+<p class = "paragraph">
+氧化三甲胺可通过调整饮食结构，适当减少红肉类（如猪肉、牛肉）、蛋类、海鱼和奶制品摄入；或通过抑制有害菌，服用益生菌调节体内肠道菌群来降低。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`氧化三甲胺及其代谢通路检测指标简述
+</h2>
+
+<table border = "1" id = "tabs">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>参考范围</td>
+<td>基本判断</td>
+</tr>
+<tr>
+<td class = "item">氧化三甲胺
+<br />（TMAO）</td>
+<td>`r str_c(params$data %>% select(TMAO) %>% pull(),"μmol/L",sep = " ")`</td>
+<td><p>< 6.2 <br />≥ 6.2-9.9 <br />≥ 10</p></td>
+<!-- <p>≥ 15（中度升高）</p> -->
+<!-- <p>≥ 30（重度升高）</td></p> -->
+<td>`r markInterpreted$stated$氧化三甲胺`</td>
+</tr>
+<tr>
+<th colspan="4">氧化三甲胺（TMAO）是肠道微生物重要代谢产物之一，先由富含磷脂酰胆碱和左旋肉碱的营养素在肠道微生物三甲胺裂解酶作用下分解为三甲胺，后进入肝脏经黄素单氧酶氧化而来。氧化三甲胺水平过高会一定程度上增加冠心病、动脉粥样硬化、高血压等心脑血管疾病的发生风险。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1" id = "tabs">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>参考范围</td>
+</tr>
+<tr>
+<td class = "item">胆碱
+<br />（Choline）</td>
+<td>`r str_c(params$data %>% select(Choline) %>% pull(),"μmol/L",sep = " ")`</td>
+<td>7.0-9.3</td>
+</tr>
+<tr>
+<th colspan="3">胆碱是人体正常生长、发育和维持各项身体功能健康运行的必需营养素，在生长发育过程中扮演着重要的角色。体内的胆碱有很大一部分来源于食物。它在大肠中被分解为三甲胺。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清胆碱（TMAO的一种饮食前体）的增加才与心血管风险相关。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1" id = "tabs">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>参考范围</td>
+</tr>
+<tr>
+<td class = "item">甜菜碱
+<br />（Betaine）</td>
+<td>`r str_c(params$data %>% select(Betaine) %>% pull(),"μmol/L",sep = " ")`</td>
+<td>27-41.1</td>
+</tr>
+<tr>
+<th colspan="3">甜菜碱是一种生物碱，广泛存在于动植物体内，其主要作用是通过提供甲基，合成多种营养物质，间接参与体内的许多生理过程，通常被认为是生命新陈代谢的中间产物。甜菜碱被肠道有害微生物代谢后会产生氧化三甲胺。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清胆碱（TMAO的一种饮食前体）的增加才与心血管风险相关。</th>
+</tr>
+</table>
+
+<br />
+
+<table border = "1" id = "tabs">
+<tr>
+<td>检测指标</td>
+<td>检测结果</td>
+<td>参考范围</td>
+</tr>
+<tr>
+<td class = "item">左旋肉碱
+<br />（L-carnitine）</td>
+<td>`r str_c(params$data %>% select("L-Carnitine") %>% pull(),"μmol/L",sep = " ")`</td>
+<td>25-54</td>
+</tr>
+<tr>
+<th colspan="3">左旋肉碱（L-carnitine） ，又称左卡尼汀、肉毒素或维生素BT，是一种促使脂肪转化为能量的类氨基酸，红色肉类（牛、羊、猪肉等）是左旋肉碱的主要来源。饮食中的左旋肉碱经人体肠道有害细菌处理后可以导致血液中氧化三甲胺浓度明显升高。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清左旋肉碱（TMAO 的一种饮食前体）的增加才与心血管风险相关。</th>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>

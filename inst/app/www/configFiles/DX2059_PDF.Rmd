@@ -1,0 +1,243 @@
+---
+documentclass: ctexart
+header-includes:
+  # 调用ctex包，默认设置中文字体，默认字体为宋体，加粗为黑体，斜体为楷体
+- \usepackage{ctex}
+# 设置灰色阴影
+- \usepackage{xcolor}
+- \usepackage{framed}
+# 设置行距
+- \usepackage{setspace}
+# 设置页面大小，设置页边距
+- \usepackage{geometry}
+- \usepackage{graphicx}
+- \geometry{a4paper,left=2cm,right=2cm,top=1.5cm,bottom=2.5cm}
+# 页眉
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \pagenumbering{arabic}
+- \usepackage{tabu}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+- \usepackage{multirow}
+- \usepackage{array}
+- \usepackage{lastpage}
+- \usepackage{makecell}
+- \rfoot{\thepage}
+- \cfoot{}
+- \setlength\headheight{30pt}
+# - \setCJKmainfont{SimSun}
+# - \setCJKmonofont{SimSun}
+# - \setmainfont{Times New Roman}
+- \usepackage{amsmath}
+- \usepackage{unicode-math}
+- \usepackage{babel}
+- \defaultfontfeatures{ Scale=MatchLowercase, Ligatures = TeX }
+- \setmainfont{Times New Roman}
+- \setmathfont{latinmodern-math.otf}
+- \setmathfont[range=it]{Times New Roman}
+
+
+output:
+  rticles::ctex:
+    keep_tex: true
+    fig_caption: no
+    number_sections: no
+    toc: no
+
+params:
+  sampleId: sampleId
+  data: data
+  reference: reference
+  sampleInfo: sampleInfo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
+rmarkdown::find_pandoc(version = "2.19.2")
+library(dplyr)
+library(kableExtra)
+library(xfun)
+library(showtext)
+library(tibble)
+library(lubridate)
+showtext::showtext.auto()
+```
+
+
+\fancyhead[L]{\includegraphics[height=30pt, trim=0 0 0 0]{headerLeft.png}}
+\fancyhead[C]{\textcolor[RGB]{0,91,172}{\zihao{3}\textbf{深圳华大医学检验实验室}}}
+\fancyhead[R]{\textcolor{gray}{\zihao{6}\textbf{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()` \\受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`\\样本编号：`r params$sampleId`\\DX-MS-B29 V1.2\\}}}
+
+\fancyfoot[L]{\zihao{6}地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）客服电话：400-605-6655 网址：www.bgidx.cn}
+\fancyfoot[R]{\zihao{6}\thepage\ / \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.25pt}
+\renewcommand{\footrulewidth}{0.25pt}
+<!-- 设置行距 -->
+  <!-- 居中显示 -->
+  <!-- 设置字号：小三 -->
+  <!-- 粗体显示 -->
+  <!-- 根据institute变量显示标题 -->
+
+\colorlet{shadecolor}{gray!50}
+\singlespacing
+\begin{center}
+\zihao{3}
+\textbf{\\}
+\textbf{氧化三甲胺代谢通路检测报告}
+\textbf{\\}
+\textbf{\\}
+\end{center}
+<!-- 加阴影 -->
+  <!-- 设置字号：五号 -->
+
+\begin{shaded}
+\zihao{4}
+\textbf{样本信息}
+\end{shaded}
+\zihao{5}
+
+
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X}
+\mbox{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()`}& \mbox{采血日期：`r params$sampleInfo %>% select("采样日期") %>% pull() %>% ymd()`} & \mbox{样本编号：`r params$sampleId`} \\ \mbox{受检者性别：`r params$sampleInfo %>% select("性别") %>% pull()`} & \mbox{接收日期：`r params$sampleInfo %>% select("入库时间") %>% pull()`} & \mbox{样本类型：全血} \\ 
+\mbox{受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`} & \mbox{检测日期：`r Sys.Date()`} & \mbox{送检科室：} \\
+\mbox{联系电话：`r params$sampleInfo %>% select("联系电话") %>% pull()`} & \mbox{ } & \mbox{检测方法：液相色谱串联质谱法} \\
+\mbox{送检单位：`r params$sampleInfo %>% select("送检单位") %>% pull()`} & \mbox{ } & \mbox{}\\
+\end{tabu}
+
+\begin{shaded}
+\zihao{4}
+\textbf{检测结果}
+\end{shaded}
+
+```{r fig.showtext=TRUE, message=FALSE, warning=FALSE, out.width="100%"}
+markInterpreted <- interprete_DX2059(data = params$data,
+                                     reference = params$reference)
+resultTibble <- tibble(
+  `检测指标` = c("氧化三甲胺","胆碱","甜菜碱","左旋肉碱"),
+  `英文名称` = c("TMAO","Choline","Betaine","L-carnitine"),
+  `单位` = c("$\\mu mol/L$","$\\mu mol/L$","$\\mu mol/L$","$\\mu mol/L$"),
+  `参考范围` = c("$<$ 6.2","7.0$-$9.3","27$-$41.1","25$-$54"),
+  `风险评估等级` = markInterpreted$riskLevel) %>% 
+  left_join(markInterpreted$marked,by = c("检测指标" = "ch_compound")) %>% 
+  select(`检测指标`,`英文名称`,`检测结果` = mark,`单位`,`参考范围`,`风险评估等级`)
+
+kbl(resultTibble, booktabs = T,align = "c",format = "latex",escape = FALSE) %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T, font_size = 11.0) %>%
+  # row_spec(0, bold = T) %>%
+  column_spec(c(3,6),width = "3.2cm") %>%
+  collapse_rows(columns = 6, latex_hline = "major", valign = "middle")
+```
+
+
+\begin{shaded}
+\zihao{4}
+\textbf{分析}
+\end{shaded}
+
+\zihao{5}
+|         `r markInterpreted$interpretation`
+      
+
+\begin{shaded}
+\zihao{4}
+\textbf{声明}
+\end{shaded}
+
+\zihao{5}
+
+1、本检测结果只对本次送检样本负责。  
+2、本检测仅用于上述检测结果中所列举的指标检测。  
+3、该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”。   
+4、检测结果的解释及疾病诊断，请咨询相关医院专科医生。  
+
+<!-- 7 + 5 + 13 = 25 -->
+<!-- 45个字一行 -->
+\color{white}`r paste(rep("\\textbf{\\\\}", 17-floor(nchar(markInterpreted$interpretation)/46)), sep = "")`
+
+
+ \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$
+ \hspace{3cm} \normalsize\color{black} 检测人：\tiny\color{white}\$result_seal_user_flag_A\$\hspace{2.5cm}\normalsize\color{black} 审核人：\tiny\color{white}\$result_seal_user_flag_B\$\hspace{2.5cm}\normalsize\color{black} 报告日期：`r Sys.Date()`
+ <!-- \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$ -->
+ <!-- \hspace{5cm} \normalsize\color{black} 检测人：张静钰\hspace{4cm}\normalsize\color{black} 审核人：廖云莉\hspace{4cm}\normalsize\color{black} 报告日期：`r Sys.Date()` -->
+ 
+\newpage
+
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{氧化三甲胺（TMAO）指标检测意义}
+\end{itemize}
+
+\zihao{5}
+|         氧化三甲胺是一种肠源性菌群代谢物，已成为心血管疾病和其他慢性疾病的潜在风险因子。氧化三甲胺由饮食中的胆碱、甜菜碱及左旋肉碱经肠道微生物代谢产生三甲胺（TMA），再通过肝脏中的黄素单加氧酶3氧化而成，主要通过肾脏排泄。高水平的氧化三甲胺会增加心脑血管疾病的发病风险，因此可作为心脑血管疾病的预警信号；对于已有心血管疾病的患者，该指标也可以在一定程度上反应病情的严重程度。氧化三甲胺水平过高提示受检者需尽快调整饮食结构或调节肠道菌群，有助于受检者心血管疾病的预防或改善。  
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{氧化三甲胺（TMAO）水平过高的危害}
+\end{itemize}
+
+\zihao{5}
+|         \textbf{高氧化三甲胺与心血管疾病}  
+
+|         目前，心血管疾病已经成为威胁人类健康的主要疾病之一。$\ll$中国心血管病报告2018$\gg$报道我国心血管疾病患病人数达到2.9亿人，其患病率及死亡率仍处于持续上升阶段，尤其是冠状动脉粥样硬化性心脏病(冠心病)病人，尽管目前已有规范化的治疗，但是在长期治疗过程中，容易发生主要不良心血管事件，预后状况差，是导致病人死亡的主要原因。近年研究发现，肠道微生物产生的代谢产物参与了高血压、糖尿病、冠心病的发生和发展过程， 氧化三甲胺作为肠道微生物代谢产物之一，其浓度升高可导致动脉硬化、血小板高反应性、炎症反应以及相关代谢综合征，与冠心病尤其是急性冠脉综合征（ACS）的发生有关。  
+
+|         \textbf{高氧化三甲胺与脑卒中}  
+
+|         脑卒中又称“中风”、“脑血管意外”是一种急性脑血管疾病，包括缺血性和出血性卒中，其中急性缺血性脑卒中（AIS）发病率较高，占脑卒中患者总数的70\%～80\%。AIS主要由于脑组织血液供应中断导致的脑组织坏死导致，具有发病率高、致残率高及致死率高等特点。2016年全球疾病负担（GBD）研究数据显示，中国是全世界终生脑卒中风险最高的国家，为39.3\%，其中男性脑卒中风险为41.1\%，女性脑卒中风险为36.7\%。相关研究显示，AIS是我国最主要的致死病因，特别是在东北和华中地区。氧化三甲胺作为动脉粥样硬化的生物标志物，可预测AIS的发生风险，并辅助评估AIS患者治疗效果及预后。
+
+\zihao{4}
+\begin{itemize}
+    \item \textbf{氧化三甲胺高风险的改善措施}
+\end{itemize}
+
+\zihao{5}
+|         氧化三甲胺可通过调整饮食结构，适当减少红肉类（如猪肉、牛肉）、蛋类、海鱼和奶制品摄入；或通过抑制有害菌，服用益生菌调节体内肠道菌群来降低。
+
+
+\begin{center}
+\zihao{3}
+\textbf{氧化三甲胺及其代谢通路检测指标简述}
+\end{center}
+
+\zihao{5}
+\centering
+\begin{tabular}{|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|>{\centering\arraybackslash}p{3.3cm}|>{\centering\arraybackslash}p{3.3cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{参考范围}&\textbf{基本判断} \\
+\hline
+\thead{\zihao{5}\textbf{氧化三甲胺} \\ \zihao{5}\textbf{（TMAO）}}& `r params$data %>% select(TMAO) %>% pull()` $\mu mol/L$ & \thead{\zihao{5}< 6.2 \\ \zihao{5}6.2-9.9\\ \zihao{5}$\geq10.0$}& `r markInterpreted$stated$氧化三甲胺` \\
+\hline
+\multicolumn{4}{|p{15cm}|}{\hspace{0.8cm}氧化三甲胺（TMAO）是肠道微生物重要代谢产物之一，先由富含磷脂酰胆碱和左旋肉碱的营养素在肠道微生物三甲胺裂解酶作用下分解为三甲胺，后进入肝脏经黄素单氧酶氧化而来。氧化三甲胺水平过高会一定程度上增加冠心病、动脉粥样硬化、高血压等心脑血管疾病的发生风险。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.8cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{参考范围} \\
+\hline
+\thead{\zihao{5}\textbf{胆碱} \\ \zihao{5}\textbf{（Choline）}}& `r params$data %>% select(Choline) %>% pull()` $\mu mol/L$ & 7.0-9.3 \\
+\hline
+\multicolumn{3}{|p{15cm}|}{\hspace{0.8cm}胆碱是人体正常生长、发育和维持各项身体功能健康运行的必需营养素，在生长发育过程中扮演着重要的角色。体内的胆碱有很大一部分来源于食物。它在大肠中被分解为三甲胺。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清胆碱（TMAO的一种饮食前体）的增加才与心血管风险相关。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.8cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{参考范围} \\
+\hline
+\thead{\zihao{5}\textbf{甜菜碱} \\ \zihao{5}\textbf{（Betaine）}}& `r params$data %>% select(Betaine) %>% pull()` $\mu mol/L$ & 27-41.1 \\
+\hline
+\multicolumn{3}{|p{15cm}|}{\hspace{0.8cm}甜菜碱是一种生物碱，广泛存在于动植物体内，其主要作用是通过提供甲基，合成多种营养物质，间接参与体内的许多生理过程，通常被认为是生命新陈代谢的中间产物。甜菜碱被肠道有害微生物代谢后会产生氧化三甲胺。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清甜菜碱（TMAO的一种饮食前体）的增加才与心血管风险相关。} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.6cm}|>{\centering\arraybackslash}p{4.8cm}|}
+\hline
+\textbf{检测指标}&\textbf{检测结果}&\textbf{参考范围} \\
+\hline
+\thead{\zihao{5}\textbf{左旋肉碱} \\ \zihao{5}\textbf{（L-carnitine）}}& `r params$data %>% select("L-Carnitine") %>% pull()` $\mu mol/L$ & 25-54 \\
+\hline
+\multicolumn{3}{|p{15cm}|}{\hspace{0.8cm}左旋肉碱（L-carnitine） ，又称左卡尼汀、肉毒素或维生素BT，是一种促使脂肪转化为能量的类氨基酸，红色肉类（牛、羊、猪肉等）是左旋肉碱的主要来源。饮食中的左旋肉碱经人体肠道有害细菌处理后可以导致血液中氧化三甲胺浓度明显升高。仅当 TMAO是通过特定肠道微生物的代谢同时升高时，血清左旋肉碱（TMAO 的一种饮食前体）的增加才与心血管风险相关。} \\
+\hline
+\end{tabular}
