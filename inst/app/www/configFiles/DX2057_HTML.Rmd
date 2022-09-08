@@ -113,6 +113,7 @@ textResults <-
                     reference = params$reference)
 
 detectData <- params$data %>% 
+  mutate(`SAM/SAH` = round(SAM / SAH, 2)) %>%
   pivot_longer(cols = everything(),names_to = "compound",values_to = "value")
 
 ch_compound_levels = c(

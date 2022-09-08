@@ -94,8 +94,8 @@ showtext::showtext.auto()
 
 
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedright}X}
-\mbox{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()`}& \mbox{采血日期：`r params$sampleInfo %>% select("采样日期") %>% pull() %>% ymd()`} & \mbox{样本编号：`r params$sampleId`} \\ \mbox{受检者性别：`r params$sampleInfo %>% select("性别") %>% pull()`} & \mbox{接收日期：`r params$sampleInfo %>% select("入库时间") %>% pull()`} & \mbox{样本类型：全血} \\ 
-\mbox{受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`} & \mbox{检测日期：`r Sys.Date()`} & \mbox{送检科室：} \\
+\mbox{受检者姓名：`r params$sampleInfo %>% select("姓名") %>% pull()`}& \mbox{采血日期：`r params$sampleInfo %>% select("采样日期") %>% pull() %>% ymd()`} & \mbox{样本编号：`r params$sampleId`} \\ \mbox{受检者性别：`r params$sampleInfo %>% select("性别") %>% pull()`} & \mbox{接收日期：`r params$sampleInfo %>% select("到样日期") %>% pull()`} & \mbox{样本类型：全血} \\ 
+\mbox{受检者年龄：`r params$sampleInfo %>% select("年龄") %>% pull()`} & \mbox{检测日期：`r params$sampleInfo %>% select("检测日期") %>% pull()`} & \mbox{送检科室：} \\
 \mbox{联系电话：`r params$sampleInfo %>% select("联系电话") %>% pull()`} & \mbox{ } & \mbox{检测方法：液相色谱串联质谱法} \\
 \mbox{送检单位：`r params$sampleInfo %>% select("送检单位") %>% pull()`} & \mbox{ } & \mbox{}\\
 \end{tabu}

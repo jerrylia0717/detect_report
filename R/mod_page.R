@@ -222,7 +222,7 @@ mod_page_server <- function(id) {
         str_split(basename(inputRmdFile()), '_')[[1]][1]
       # showNotification("Waiting...", type = "message")
       if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
-        read_xls(inputSampleInfoFile()) %>%
+        read_xls(inputSampleInfoFile(),sheet = 2) %>%
           select(`Sample Name` = `样品编号`,
                  `姓名`,
                  `联系电话` = `电话`,
@@ -230,7 +230,8 @@ mod_page_server <- function(id) {
                  `性别`,
                  `出生日期`,
                  `送检单位`,
-                 `到样日期`) %>%
+                 `到样日期`,
+                 `检测日期`) %>%
           filter(`Sample Name` %in% detectData()$`Sample Name`) %>%
           mutate(`年龄` = round(interval(ymd(`出生日期`), ymd(`采样日期`)) / years(1), 0)) %>%
           mutate(across(.cols = `联系电话`,.fns = as.character)) %>%
