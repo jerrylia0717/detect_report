@@ -118,12 +118,13 @@ mod_pagebody_ui <- function(id) {
       collapsible = T,
       collapsed = F,
       status = "primary",
-      DTOutput(ns("sampleInfo"), width = "100%")
+      DTOutput(ns("sampleInfo"), width = "100%"),
+      verbatimTextOutput(ns("failedSample"))
     )
   ),
   actionButton(
     inputId = ns("start"),
-    label = "Start generating",
+    label = "Start",
     class = "btn-lg btn-success",
     width = "100%"
   ))
@@ -134,8 +135,9 @@ mod_pagebody_ui <- function(id) {
 #' @noRd
 #' @importFrom shinyFiles getVolumes shinyDirChoose parseDirPath shinyFileChoose parseFilePaths
 #' @importFrom fs path_home
+#' @importFrom readxl read_xls
 #' @importFrom DT renderDT datatable
-#' @importFrom lubridate ymd
+#' @importFrom lubridate ymd interval years
 #' @importFrom purrr map_chr
 #' @importFrom stringr str_split
 #' @import tidyr
@@ -168,7 +170,7 @@ mod_page_server <- function(id) {
       id = "sampleinfo",
       root = volumes,
       session = session,
-      filetypes = "xlsx",
+      filetypes = c("xlsx","xls"),
       restrictions = system.file(package = "base")
     )
 
@@ -189,7 +191,7 @@ mod_page_server <- function(id) {
 
     inputDetectDataFile <- reactive({
       validate(need(!is.integer(input$detectdata),
-                    "No file exist!"))
+                    ""))
       parseFilePaths(volumes, input$detectdata)$datapath
     })
     # get report save dir
@@ -218,22 +220,26 @@ mod_page_server <- function(id) {
       req(detectData)
       product_code <-
         str_split(basename(inputRmdFile()), '_')[[1]][1]
+      # showNotification("Waiting...", type = "message")
       if (product_code %in% c("DX2056", "DX2057", "DX2058", "DX2059")) {
-        read_xlsx(inputSampleInfoFile()) %>%
-          select(`Sample Name` = `实验室编号(样本编号)`,
+        read_xls(inputSampleInfoFile()) %>%
+          select(`Sample Name` = `样品编号`,
                  `姓名`,
-                 `采样日期`,
+                 `联系电话` = `电话`,
+                 `采样日期` = `样品采集日期`,
                  `性别`,
-                 `入库时间`,
                  `出生日期`,
-                 `联系电话`,
                  `送检单位`,
-                 `年龄`) %>%
-          mutate(`入库时间` = map_chr(.x = `入库时间`, .f = ~ as.character(ymd(.x))))
+                 `到样日期`) %>%
+          filter(`Sample Name` %in% detectData()$`Sample Name`) %>%
+          mutate(`年龄` = round(interval(ymd(`出生日期`), ymd(`采样日期`)) / years(1), 0)) %>%
+          mutate(across(.cols = `联系电话`,.fns = as.character)) %>%
+          mutate(across(.cols = contains("日期"),.fns = ymd)) %>%
+          distinct()
       } else if (product_code %in% c("DX1597", "DX1683", "DX1710", "DX1736")) {
           read_xlsx(inputSampleInfoFile()) %>%
           # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
-          select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`, `采样时间`, `出生日期`, `年龄`) %>%
+          select(`Sample Name` = `绑定的样本编码`,`姓名`,`性别`, `证件号`, `采样时间`, `出生日期`, `年龄`) %>%
           filter(`Sample Name` %in% detectData()$`Sample Name`) %>%
           mutate(`Sample Name` = toupper(`Sample Name`)) %>%
           mutate(`年龄` = pmap_dbl(
@@ -260,30 +266,28 @@ mod_page_server <- function(id) {
       req(sampleInfo)
       detectData_longer <- detectData() %>%
         mutate(across(-`Sample Name`,.fns = round,2))
-        # pivot_longer(
-        #   cols = -"Sample Name",
-        #   names_to = "compound",
-        #   values_to = "value"
-        # ) %>%
-        # mutate(value = map_dbl(.x = value, .f = ~ round(as.numeric(.x), 2))) %>%
-        # pivot_wider(names_from = compound, values_from = value)
 
       data_combine <- detectData_longer %>%
         nest(data = -`Sample Name`) %>%
-        inner_join(sampleInfo(), by = "Sample Name") %>%
-        nest(sampleInfo = c(-`Sample Name`, -data))
+        left_join(sampleInfo(), by = "Sample Name")
+        # filter(!is.na(`年龄`),!is.na(`性别`)) %>%
+        # nest(sampleInfo = c(-`Sample Name`, -data))
     })
 
     output$sampleInfo <- renderDT({
       req(combineData)
       datatable(
-        combineData() %>%
-          unnest(data) %>%
-          unnest(sampleInfo),
+        combineData() %>% select(-data),
         selection = 'none',
         options = list(pageLength = 20, scrollY = "250px")
       )
     })
+    output$failedSample <- renderText({
+      failedSamples <- combineData() %>% filter(is.na(`姓名`)) %>% select(`Sample Name`) %>% pull()
+      paste0("Failed:",paste0(failedSamples,collapse = ","),sep = " ")
+    })
+
+
     # check input
     observe({
       updateCheckboxInput(
@@ -353,7 +357,9 @@ mod_page_server <- function(id) {
 
       renderFlow(
         rmdFile = inputRmdFile(),
-        combineData = combineData(),
+        combineData = combineData() %>%
+          filter(!is.na(`姓名`)) %>%
+          nest(sampleInfo = c(-`Sample Name`, -data)),
         saveDir = inputSaveDir()
       )
     })

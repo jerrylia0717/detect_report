@@ -1080,11 +1080,11 @@ pwalk(
   )
 )
 # ==============================20220802——FSV--54==========================================
-fsv <- read_xlsx('D:/outputs/reports/20220821_FSV_61/20220819_0315_00306_FSV_61.xlsx') %>%
+fsv <- read_xlsx('D:/outputs/reports/20220905_FSV_194/20220902_0315_00315_FSV_194.xlsx') %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 
 sampleInfo <-
-  read_xlsx("D:/outputs/reports/20220818_FSV_109/2022-08-18营养及内分泌代谢检测数据.xlsx") %>%
+  read_xlsx("D:/outputs/1662340610326营养及内分泌代谢检测数据.xlsx") %>%
   # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
   select(`Sample Name` = `绑定的样本编码`, `性别`) %>%
   # filter(`Sample Name` == "MS13036") %>%
@@ -1422,37 +1422,75 @@ pwalk(
 )
 
 #
-# dx2057 <- read_xlsx("D:/outputs/reports/20220804_心脑血管报告/副本20220803_0146_04770_HCY_3（DX2057）.xlsx") %>%
-#   mutate(across(-`Sample Name`,.fns = round,2))
-#
-# dx2057_ref <- read_xlsx("D:/outputs/configFiles/DX2057_reference.xlsx")
-#
-# data_combine31 <- dx2057 %>%
-#   nest(data = -`Sample Name`) %>%
-#   left_join(sampleInfo5, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
-#   filter(!is.na(`性别`)) %>%
-#   nest(sampleInfo = c(-`Sample Name`, -data))
-#
-# pwalk(
-#   .l = list(
-#     ..1 = data_combine31$`Sample Name`,
-#     ..2 = data_combine31$data,
-#     ..3 = data_combine31$sampleInfo
-#   ),
-#   .f = ~ render(
-#     "D:/outputs/configFiles/DX2057_PDF.Rmd",
-#     params = list(
-#       sampleId = ..1,
-#       data = ..2,
-#       sampleInfo = ..3,
-#       reference = dx2057_ref
-#     ),
-#     output_dir = "D:/outputs/reports/20220804_心脑血管报告/",
-#     output_file = paste0(..1,"_DX2057_正式报告_中文_其他",".pdf",collapse = ""),
-#     encoding = "UTF-8",
-#     clean = TRUE
-#   )
-# )
+dx2057 <- read_xlsx("D:/outputs/reports/20220906_linlaoshi/DX2056.xlsx") %>%
+  mutate(across(-`Sample Name`,.fns = round,2))
+
+dx2057_ref <- read_xlsx("D:/outputs/configFiles/DX2057_reference.xlsx")
+
+sampleInfo5 <- read_xls("D:/outputs/reports/20220906_linlaoshi/sample (8)(1).xls",sheet = 2) %>%
+  select(`实验室编号(样本编号)` = `样品编号`,
+         `姓名`,
+         `出生日期`,
+         `联系电话` = `电话`,
+         `采样日期` = `样品采集日期`,
+         `性别`,
+         `出生日期`,
+         `送检单位`,
+         `到样日期`
+  ) %>%
+  # left_join(sampleInfo2,by = c("实验室编号(样本编号)" = "Sample Name")) %>%
+  mutate(`入库时间` = `到样日期`) %>%
+  mutate(`年龄` = round(interval(ymd(`出生日期`), ymd("2022-08-15")) / years(1), 0)) %>%
+  mutate(across(.cols = `联系电话`,.fns = as.character))
+
+
+data_combine31 <- dx2057 %>%
+  nest(data = -`Sample Name`) %>%
+  left_join(sampleInfo5, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+  filter(!is.na(`性别`)) %>%
+  nest(sampleInfo = c(-`Sample Name`, -data))
+
+pwalk(
+  .l = list(
+    ..1 = data_combine31$`Sample Name`,
+    ..2 = data_combine31$data,
+    ..3 = data_combine31$sampleInfo
+  ),
+  .f = ~ render(
+    "D:/outputs/configFiles/DX2057_PDF.Rmd",
+    params = list(
+      sampleId = ..1,
+      data = ..2,
+      sampleInfo = ..3,
+      reference = dx2057_ref
+    ),
+    output_dir = "D:/outputs/reports/20220906_linlaoshi/",
+    output_file = paste0(..1,"_DX2057_正式报告_中文_其他",".pdf",collapse = ""),
+    encoding = "UTF-8",
+    clean = TRUE
+  )
+)
+
+pwalk(
+  .l = list(
+    ..1 = data_combine31$`Sample Name`,
+    ..2 = data_combine31$data,
+    ..3 = data_combine31$sampleInfo
+  ),
+  .f = ~ render(
+    "D:/outputs/configFiles/DX2057_HTML.Rmd",
+    params = list(
+      sampleId = ..1,
+      data = ..2,
+      sampleInfo = ..3,
+      reference = dx2057_ref
+    ),
+    output_dir = "D:/outputs/reports/20220906_linlaoshi/",
+    output_file = paste0("DX2057_",..1,".html",collapse = ""),
+    encoding = "UTF-8",
+    clean = TRUE
+  )
+)
 #
 #
 # sampleInfo7 <- read_xlsx("D:/outputs/员工体检数据汇总/1659347717424营养及内分泌代谢检测数据.xlsx") %>%
@@ -1460,11 +1498,3 @@ pwalk(
 #     mutate(`Sample Name` = toupper(`Sample Name`)) %>%
 #     mutate(across(.cols = `年龄`,.fns = as.numeric))
 
-a <- tibble(rawFiles = list.files("D:/20220817_心脑血管_HTML/")) %>%
-  mutate(subname = map_chr(.x = rawFiles,.f = ~str_remove(.x,".html"))) %>%
-  filter(str_detect(subname,"DX2059")) %>%
-  mutate(sampleId = map_chr(.x = subname,.f = ~str_split(.x,"_")[[1]][2]))
-
-library(openxlsx)
-
-write.xlsx(a %>% select(sampleId),file = "D:/sample_dx2059.xlsx")
