@@ -284,7 +284,7 @@ mod_page_server <- function(id) {
       )
     })
     output$failedSample <- renderText({
-      failedSamples <- combineData() %>% filter(is.na(`姓名`)) %>% select(`Sample Name`) %>% pull()
+      failedSamples <- combineData() %>% filter(is.na(`年龄`)) %>% select(`Sample Name`) %>% pull()
       paste0("Failed:",paste0(failedSamples,collapse = ","),sep = " ")
     })
 
@@ -359,7 +359,7 @@ mod_page_server <- function(id) {
       renderFlow(
         rmdFile = inputRmdFile(),
         combineData = combineData() %>%
-          filter(!is.na(`姓名`)) %>%
+          filter(!is.na(`年龄`)) %>%
           nest(sampleInfo = c(-`Sample Name`, -data)),
         saveDir = inputSaveDir()
       )

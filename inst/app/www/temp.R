@@ -903,15 +903,15 @@
 # library(tidyverse)
 # library(readxl)
 hor <-
-  read_xlsx("D:/outputs/reports/20220810_HOR_106/20220808_0146_04782_HOR_106.xlsx") %>%
+  read_xlsx("D:/outputs/reports/20220909_HOR_105/20220906_J220906014_HOR_delivery.xlsx") %>%
   mutate(across(-`Sample Name`, .fns = round, 2))
 
 
 sampleInfo <-
-  read_xlsx("D:/outputs/1662083983427营养及内分泌代谢检测数据.xlsx") %>%
+  read_xlsx("D:/outputs/1662688720142营养及内分泌代谢检测数据.xlsx") %>%
   # select(`Sample Name` = `绑定的样本编码`, `性别`, `年龄`)
   select(`Sample Name` = `绑定的样本编码`, `性别`, `证件号`, `采样时间`, `出生日期`, `年龄`) %>%
-  filter(`Sample Name` == "MS22491") %>%
+  filter(`Sample Name` %in% hor$`Sample Name`) %>%
   mutate(`Sample Name` = toupper(`Sample Name`)) %>%
   mutate(`年龄` = pmap_dbl(
     .l = list(
@@ -958,7 +958,7 @@ pwalk(
       reference = dx1597_ref,
       interpretation = dx1597_inp
     ),
-    output_dir = "D:/outputs/reports/",
+    output_dir = "D:/outputs/reports/20220909_HOR_105/",
     output_file = paste0("DX1597_",..1,".html",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE

@@ -1,6 +1,6 @@
 Package: reportGenerator
 Title: reportGenerator
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person('jiaqi', 'liang', email = 'liangjiaqi@genomics.cn', role = c('cre', 'aut'))
 Description: report generator
 License: MIT + file LICENSE
