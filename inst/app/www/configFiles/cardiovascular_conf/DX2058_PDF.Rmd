@@ -154,11 +154,11 @@ kbl(tempResult, booktabs = T,align = "c",format = "latex",escape = FALSE) %>%
 \color{white}`r paste(rep("\\textbf{\\\\}", 14-floor(nchar(textResults$interpretation)/46)), sep = "")`
 
 
- <!-- \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$ -->
- <!-- \hspace{3cm} \normalsize\color{black} 检测人：\tiny\color{white}\$result_seal_user_flag_A\$\hspace{2.5cm}\normalsize\color{black} 审核人：\tiny\color{white}\$result_seal_user_flag_B\$\hspace{2.5cm}\normalsize\color{black} 报告日期：`r Sys.Date()` -->
-
  \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$
- \hspace{5cm} \normalsize\color{black} 检测人：张静钰\hspace{4cm}\normalsize\color{black} 审核人：廖云莉\hspace{4cm}\normalsize\color{black} 报告日期：`r Sys.Date()`
+ \hspace{3cm} \normalsize\color{black} 检测人：\tiny\color{white}\$result_seal_user_flag_A\$\hspace{2.5cm}\normalsize\color{black} 审核人：\tiny\color{white}\$result_seal_user_flag_B\$\hspace{2.5cm}\normalsize\color{black} 报告日期：`r Sys.Date()`
+
+ <!-- \hspace{14cm} \tiny\color{white}\$result_seal_user_flag_C\$ -->
+ <!-- \hspace{5cm} \normalsize\color{black} 检测人：张静钰\hspace{4cm}\normalsize\color{black} 审核人：廖云莉\hspace{4cm}\normalsize\color{black} 报告日期：`r Sys.Date()` -->
  
 \newpage
 

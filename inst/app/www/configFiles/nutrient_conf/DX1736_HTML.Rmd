@@ -1,0 +1,203 @@
+---
+output: html_document
+params: 
+  sampleId: sampleId
+  data: data
+  sampleInfo: sampleInfo
+  reference: reference
+  interpretation: interpretation
+title: 脂溶性维生素检测报告
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(plotly)
+```
+
+<head>
+<style>
+html {
+font-weight:normal;
+}
+h1.title {
+text-align:center;
+font-size:1.7em;
+font-family:"Times New Roman", Times, serif;
+font-weight:bolder;}
+h2 {
+background-color:#3CB371;
+color:#FFFFFF;
+font-size:1.4em;
+font-family:"Times New Roman", Times, serif;
+}
+h3 {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+font-weight: bolder;
+}
+p.paragraph {
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+#individual {
+color: #0442EF;
+text-indent:38px;
+font-family:"Times New Roman", Times, serif;
+font-size:1.4em;
+}
+<!-- table tr:first-child { -->
+<!-- font-weight: bolder; -->
+<!-- } -->
+td.item {
+font-weight: bolder;
+}
+td.c1 {
+height:50px;
+text-align:center;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+}
+td.c2 {
+height:50px;
+text-align:left;
+vertical-align:center;
+font-family:"Times New Roman", Times, serif;
+font-size:1.3em;
+text-indent:38px;
+}
+</style>
+</head>
+
+
+<html>
+<body>
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 检测结果
+</h2>
+
+```{r,echo=FALSE}
+reference_filter <- params$reference %>%
+    filter(params$sampleInfo$`年龄` >= age_lower,params$sampleInfo$`年龄` <= age_upper)
+
+detectData <- params$data %>% mutate(`25(OH)D,D2+D3` = round(VD2 + VD3,2)) %>% 
+  select(-VD2,-VD3) %>% 
+  pivot_longer(cols = everything(),names_to = "compound",values_to = "value")
+
+ch_compound_levels = c("维生素A","25-羟基维生素D,D2+D3","维生素E","维生素K1")
+
+plot <- trans2show_nutrition_ggplot(
+  data = detectData,
+  reference = reference_filter,
+  barWidth = 0.2,
+  textSize = 6,
+  ch_compound_levels = ch_compound_levels
+)
+```
+
+```{r,echo=FALSE}
+htmltools::div(ggplotly(plot) %>% style(hoverinfo = 'none'), align="center")
+```
+
+```{r include=FALSE}
+chrlist <- interpret_nutriMeta(
+  data = detectData,
+  reference = reference_filter,
+  interpret_text = params$interpretation,
+  product_label = "维生素",
+  ch_compound_levels = ch_compound_levels
+)
+```
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`结果
+</h2>
+
+<p id = "individual">
+`r chrlist[["results"]]`
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`分析
+</h2>
+
+<p id = "individual">
+`r paste("尊敬的",params$sampleInfo$"性别","士您好，感谢您选择华大基因脂溶性维生素检测。 ",sep = "")`
+</p>
+
+<p id = "individual">
+`r chrlist$interpretation`
+</p>
+
+<p id = "individual">
+如对检测报告有疑问，请咨询江余姝 13510496071。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`备注
+</h2>
+
+<p class = "paragraph">
+1.采血前若未空腹12-14小时或24小时内服用过维生素补充剂，可能会导致血液中个别维生素含量偏高。
+</p>
+
+<p class = "paragraph">
+2.人体的维生素D 营养状况需要通过25-羟基维生素D<sub>2</sub> 和25-羟基维生素D<sub>3</sub> 的总水平来评估。
+</p>
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")` 声明
+</h2>
+
+<p class = "paragraph">
+1.本检测结果只对本次送检样本负责；
+</p>
+
+<p class = "paragraph">
+2.本检测仅用于上述检测结果中所列举的指标检测；
+</p>
+
+<p class = "paragraph">
+3.该检测技术存在检测下限值，如样本中实际物质浓度低于该检测下限，则出具的检测数据为“小于检测下限值”；
+</p>
+
+<p class = "paragraph">
+4.检测结果的解释及疾病诊断，请咨询相关医院专科医生。
+</p>
+
+
+<h2>
+`r icons::icon_style(icons::fontawesome("arrow-circle-right", style = "solid"),fill = "#FFFFFF")`	脂溶性维生素基本介绍
+</h2>
+
+<table border = "1" id = "tabs">
+<col style="width:18%">
+<col style="width:82%">
+<tr>
+<td class = "c1">维生素A</td>
+<td class = "c2">又名视黄醇，对维持视网膜功能、上皮组织生长和分化、骨骼生长、生育和胚胎发育等具有重要作用。维生素A还可增强免疫功能，抵抗呼吸道和胃肠道感染。血清维生素A的水平可以反映肠道消化吸收为维生素A和胡萝卜素的量（胡萝卜素可代谢成维生素A）。</td>
+</tr>
+<tr>
+<td class = "c1">维生素E</td>
+<td class = "c2">又名α-生育酚，是体内最主要的抗氧化剂之一，保护细胞免受自由基损伤，延缓衰老，促进性激素分泌，提高生育能力，使男性精子活力和数量增加，女性雌激素浓度增高、预防流产。维生素E也应用于烧伤、冻伤、毛细血管出血、更年期综合症的治疗和美容。近年来还发现维生素E能预防近视的发生和发展。</td>
+</tr>
+<tr>
+<td class = "c1">维生素K<sub>1</sub></td>
+<td class = "c2">又名叶绿醌，是凝血因子γ－羧化酶的辅酶，其它凝血因子7、9、10的合成也依赖于它。维生素K<sub>1</sub>的主要功能在于促进血液正常凝固，同时在防止新生婴儿出血疾病、预防内出血及痔疮、减少生理期大量出血和保障骨骼密度上也有重要功能。</td>
+</tr>
+<tr>
+<td class = "c1">25-羟基维生素D<br />25-羟基维生素D<sub>2</sub><br />25-羟基维生素D<sub>3</sub></td>
+<td class = "c2">维生素D包括维生素D<sub>3</sub>（光照合成及动物性来源为主）和维生素D<sub>2</sub>（植物性来源为主）两种型别。25-羟基维生素D是维生素D在体内的循环和贮存形式，稳定性好，是公认的评价人体维生素D营养状况的可靠指标，主要包括两种形式： 25(OH)D<sub>2</sub>、 25(OH)D<sub>3</sub>，其中 25(OH)D<sub>3</sub>是血液中维生素 D 的主要存在形式。维生素D经典的功能是维持血清/血浆钙和磷水平的稳定，以满足骨骼矿物化、肌肉收缩、神经传导及细胞的基本功能。维生素D参与调节细胞增殖和分化，参与调节机体免疫功能，对于免疫力的提升具有重要作用。长期维生素D缺乏与儿童佝偻病、成人骨质软化症、骨质疏松有关，近年来研究发现自身免疫性疾病、2型糖尿病等可能也与维生素D缺乏有关。但是，长期过量摄入这种脂溶性维生素又会导致中毒。</td>
+</tr>
+</table>
+
+<br />
+
+</body>
+</html>
