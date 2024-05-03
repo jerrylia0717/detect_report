@@ -14,10 +14,32 @@ app_ui <- function(request) {
     dashboardPage(
       header = dashboardHeader(title = "report generator"),
       sidebar = dashboardSidebar(
-        mod_page_ui("page")
+        conditionalPanel('input.main_tabs == "eer"',
+                         mod_page_ui("page")
+                         ),
+        conditionalPanel('input.main_tabs == "cr"',
+                         mod_cardioSidebar_ui("mod_cr")
+                         )
       ),
       body = dashboardBody(
-        mod_pagebody_ui('page')
+        tabsetPanel(
+          id = "main_tabs",
+          tabPanel(
+            title = "Employee examination report",
+            value = "eer",
+            mod_pagebody_ui('page')
+          ),
+          tabPanel(
+            title = "Cardiovascular report",
+            value = "cr",
+            mod_cardioReport_ui('mod_cr')
+          ),
+          tabPanel(
+            title = "SNP report",
+            value = "sr",
+            mod_pagebody_ui('page')
+          )
+        )
       )
     )
   )

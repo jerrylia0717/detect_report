@@ -72,6 +72,18 @@ mod_pagebody_ui <- function(id) {
   ns <- NS(id)
   tagList(fluidRow(
     box(
+      title = "Configuration when installing on a new computer",
+      solidHeader = T,
+      collapsible = T,
+      collapsed = T,
+      status = "primary",
+      width = 12,
+      actionButton(inputId = ns("confNewPc"),
+                   label = "run configuration",
+                   class = "btn-danger",
+                   width = "100%")
+    ),
+    box(
       title = "Input check",
       solidHeader = TRUE,
       width = 2,
@@ -140,6 +152,7 @@ mod_pagebody_ui <- function(id) {
 #' @importFrom lubridate ymd interval years
 #' @importFrom purrr map_chr
 #' @importFrom stringr str_split
+#' @importFrom icons download_fontawesome
 #' @import tidyr
 #' @import dplyr
 mod_page_server <- function(id) {
@@ -148,6 +161,10 @@ mod_page_server <- function(id) {
     volumes <- c(Home = path_home(),
                  "R Installation" = R.home(),
                  getVolumes()())
+    # Configuration when installing on a new computer
+    observeEvent(input$confNewPc,{
+      download_fontawesome()
+    })
     # get rmd file
     shinyFileChoose(
       input = input,

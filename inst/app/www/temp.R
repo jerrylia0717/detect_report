@@ -1126,7 +1126,7 @@ pwalk(
 )
 #
 # # ===================================20220804-心脑血管报告==============================
-dx2059 <- read_xlsx("D:/outputs/reports/20220914_cardio/20220914_J220914022_TMAO_2_廊坊.xlsx") %>%
+dx2059 <- read_xlsx("D:/outputs/reports/20220921_cardio/20220920_J220920089_TMAO_4.xlsx") %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 # #
 sampleInfo2 <- read_xlsx("D:/outputs/reports/20220804_心脑血管报告/接收日期.xlsx")
@@ -1157,7 +1157,7 @@ sampleInfo3 <- read_xls("D:/outputs/reports/20220823_cardio/sample info.xls",she
 
 data_combine <- dx2059 %>%
   nest(data = -`Sample Name`) %>%
-  left_join(sampleInfo5, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+  left_join(sampleInfo3, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
   filter(!is.na(`性别`)) %>%
   # select("Sample Name",data,`性别`,`年龄`) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
@@ -1200,35 +1200,34 @@ pwalk(
     ..3 = data_combine$sampleInfo
   ),
   .f = ~ render(
-    "D:/outputs/configFiles/DX2059_PDF.Rmd",
+    "D:/reportGenerator_v0.1.2/configFiles/cardiovascular_conf/DX2059_PDF.Rmd",
     params = list(
       sampleId = ..1,
       data = ..2,
       sampleInfo = ..3,
       reference = dx2059_ref
     ),
-    output_dir = "D:/outputs/reports/20220914_cardio/",
+    output_dir = "D:/outputs/reports/20220921_cardio/",
     output_file = paste0(..1,"_DX2059_正式报告_中文_其他",".pdf",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
   )
 )
 # #
-dx2058 <- read_xlsx("D:/outputs/reports/20220914_cardio/20220914_J220914057_Cer_2_廊坊.xlsx") %>%
+dx2058 <- read_xlsx("D:/outputs/reports/20220921_cardio/20220920_J220920088_Cer_19.xlsx") %>%
   mutate(across(-`Sample Name`,.fns = round,2))
 #
-sampleInfo3 <- read_xls("D:/outputs/reports/20220829_cardio/sample info.xls") %>%
+sampleInfo3 <- read_xls("D:/outputs/reports/20220921_cardio/sample (4).xls",sheet = 2) %>%
   select("实验室编号(样本编号)" = "样品编号","姓名","采样日期" = "样品采集日期","性别",
-         "出生日期","联系电话" = "电话","送检单位","年龄","入库时间" = "到样日期") %>%
-  mutate(`年龄` = map2_dbl(.x = `年龄`,.y = `出生日期`,
-                         .f = ~case_when(is.na(.x) ~ round(interval(ymd(.y), ymd("2022-08-29")) / years(1), 0),
-                                         TRUE ~ as.numeric(.x)
-                                         ))) %>%
+         "出生日期","联系电话" = "电话","送检单位","年龄","到样日期","检测日期") %>%
+  mutate(`年龄` = map2_dbl(.x = `检测日期`,.y = `出生日期`,
+                         .f = ~round(interval(ymd(.y), ymd(.x)) / years(1), 0)
+                                         )) %>%
   distinct()
 
 data_combine11 <- dx2058 %>%
   nest(data = -`Sample Name`) %>%
-  left_join(sampleInfo5, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
+  left_join(sampleInfo3, by = c("Sample Name" = "实验室编号(样本编号)")) %>%
   filter(!is.na(`性别`)) %>%
   # select("Sample Name",data,`性别`,`年龄`) %>%
   nest(sampleInfo = c(-`Sample Name`, -data))
@@ -1272,14 +1271,14 @@ pwalk(
     ..3 = data_combine11$sampleInfo
   ),
   .f = ~ render(
-    "D:/outputs/configFiles/DX2058_PDF.Rmd",
+    "D:/reportGenerator_v0.1.2/configFiles/cardiovascular_conf/DX2058_PDF.Rmd",
     params = list(
       sampleId = ..1,
       data = ..2,
       sampleInfo = ..3,
       reference = dx2058_ref
     ),
-    output_dir = "D:/outputs/reports/20220914_cardio/",
+    output_dir = "D:/outputs/reports/20220921_cardio/",
     output_file = paste0(..1,"_DX2058_正式报告_中文_其他",".pdf",collapse = ""),
     encoding = "UTF-8",
     clean = TRUE
@@ -1500,3 +1499,91 @@ pwalk(
 #     mutate(`Sample Name` = toupper(`Sample Name`)) %>%
 #     mutate(across(.cols = `年龄`,.fns = as.numeric))
 
+
+# ======================================20220920 SNP ====================================
+library(tidyverse)
+library(readxl)
+library(rmarkdown)
+DX1295 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916_jieni_DX1295_tianjin/20220916_jieni_DX1295_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样本编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1295$sampleId,.y = DX1295$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "解腻-小胖基因检测报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916_jieni_DX1295_tianjin/",
+                   output_file = paste0(..1,"_DX1295_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))
+
+DX1734 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916-paobuji_DX1734_tianjin/20220916-paobuji_DX1734_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样品编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1734$sampleId,.y = DX1734$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "跑步基-最大摄氧量检测评估报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/",
+                   output_file = paste0(..1,"_DX1734_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))
+
+DX1733 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916-ruhua_DX1733_tianjin/20220916-ruhua_DX1733_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样品编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1733$sampleId,.y = DX1733$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "入婳-肤质基因检测评估报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/",
+                   output_file = paste0(..1,"_DX1733_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))
+
+DX1728 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916-weixun_DX1728_tianjin/20220916-weixun_DX1728_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样本编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1728$sampleId,.y = DX1728$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "微醺报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/",
+                   output_file = paste0(..1,"_DX1728_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))
+
+DX1732 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916-yindong_DX1732_tianjin/20220916-yindong_DX1732_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样品编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1732$sampleId,.y = DX1732$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "因动-运动能力与营养吸收检测评估报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/",
+                   output_file = paste0(..1,"_DX1732_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))
+
+DX1735 <- read_xlsx("D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/20220916-yingyangji_DX1735_tianjin/20220916-yingyangji_DX1735_tianjin.xlsx") %>%
+  rename(c("sampleId" = "样品编号")) %>%
+  nest(-`sampleId`)
+
+walk2(.x = DX1735$sampleId,.y = DX1735$data,
+      .f = ~render("D:/reportGenerator_v0.1.2/configFiles/snp.Rmd",
+                   params = list(data = .y,
+                                 sampleId = .x,
+                                 header = "营养参-营养吸收能力检测评估报告",
+                                 foot = "地址：广东省深圳市盐田区北山工业区11栋（邮编：518083）"),
+                   output_dir = "D:/outputs/reports/20220920_snp/核酸质谱报告生成-20220920/",
+                   output_file = paste0(..1,"_DX1735_正式报告",".pdf",collapse = ""),
+                   encoding = "UTF-8"))

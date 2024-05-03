@@ -7,4 +7,5 @@
 app_server <- function(input, output, session) {
   # Your application server logic
   mod_page_server("page")
+  mod_cardioReport_server("mod_cr")
 }
